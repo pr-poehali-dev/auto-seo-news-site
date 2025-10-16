@@ -44,9 +44,60 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         if method == 'GET':
             params = event.get('queryStringParameters') or {}
+            news_id = params.get('id')
             category = params.get('category')
             limit = int(params.get('limit', 50))
             offset = int(params.get('offset', 0))
+            
+            if news_id:
+                cursor.execute(
+                    '''SELECT id, title, excerpt, content, category, image_url, 
+                       author, published_at, is_hot, views_count, slug,
+                       meta_title, meta_description 
+                       FROM t_p74494482_auto_seo_news_site.news 
+                       WHERE id = %s''',
+                    (news_id,)
+                )
+                news_item = cursor.fetchone()
+                cursor.close()
+                conn.close()
+                
+                if not news_item:
+                    return {
+                        'statusCode': 404,
+                        'headers': {
+                            'Content-Type': 'application/json',
+                            'Access-Control-Allow-Origin': '*'
+                        },
+                        'body': json.dumps({'error': 'News not found'}),
+                        'isBase64Encoded': False
+                    }
+                
+                return {
+                    'statusCode': 200,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'body': json.dumps({
+                        'news': {
+                            'id': news_item['id'],
+                            'title': news_item['title'],
+                            'excerpt': news_item['excerpt'],
+                            'content': news_item['content'],
+                            'category': news_item['category'],
+                            'image': news_item['image_url'],
+                            'author': news_item['author'],
+                            'time': news_item['published_at'].isoformat() if news_item['published_at'] else None,
+                            'isHot': news_item['is_hot'],
+                            'views': news_item['views_count'],
+                            'slug': news_item['slug'],
+                            'metaTitle': news_item['meta_title'],
+                            'metaDescription': news_item['meta_description']
+                        }
+                    }),
+                    'isBase64Encoded': False
+                }
             
             if category and category != 'Главная':
                 cursor.execute(

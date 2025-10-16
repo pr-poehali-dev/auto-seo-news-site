@@ -76,21 +76,21 @@ const NewsPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
-        <title>{news.title} | НОВОСТИ 24</title>
+        <title>{news.title || 'Новость'} | НОВОСТИ 24</title>
         <meta name="description" content={news.excerpt || ''} />
-        <meta name="keywords" content={`${news.category?.toLowerCase() || 'новости'}, новости, россия, ${news.title}`} />
+        <meta name="keywords" content={`${news.category?.toLowerCase() || 'новости'}, новости, россия, ${news.title || ''}`} />
         
         <meta property="og:type" content="article" />
-        <meta property="og:title" content={news.title} />
-        <meta property="og:description" content={news.excerpt} />
-        <meta property="og:image" content={news.image} />
-        <meta property="article:published_time" content={news.time} />
-        <meta property="article:section" content={news.category} />
+        <meta property="og:title" content={news.title || 'Новость'} />
+        <meta property="og:description" content={news.excerpt || ''} />
+        <meta property="og:image" content={news.image || ''} />
+        <meta property="article:published_time" content={news.time || ''} />
+        <meta property="article:section" content={news.category || ''} />
         
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={news.title} />
-        <meta name="twitter:description" content={news.excerpt} />
-        <meta name="twitter:image" content={news.image} />
+        <meta name="twitter:title" content={news.title || 'Новость'} />
+        <meta name="twitter:description" content={news.excerpt || ''} />
+        <meta name="twitter:image" content={news.image || ''} />
         
         <link rel="canonical" href={window.location.href} />
         
