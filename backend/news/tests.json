@@ -1,0 +1,16 @@
+{
+  "tests": [
+    {
+      "name": "Get all news",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Get news by category",
+      "method": "GET",
+      "path": "/?category=Технологии&limit=10",
+      "expectedStatus": 200
+    }
+  ]
+}

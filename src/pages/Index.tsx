@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -15,70 +15,49 @@ const categories = [
   { name: 'Общество', icon: 'Users' }
 ];
 
-const newsData = [
-  {
-    id: 1,
-    category: 'Технологии',
-    title: 'Искусственный интеллект меняет мир: новые прорывы в машинном обучении',
-    excerpt: 'Последние достижения в области ИИ открывают невероятные возможности для будущего технологий',
-    image: 'https://cdn.poehali.dev/projects/7ba64612-b62d-469b-894e-0aa0d8ed8b67/files/8fac879f-524b-4bf5-920d-81a447401b6e.jpg',
-    time: '2 часа назад',
-    isHot: true
-  },
-  {
-    id: 2,
-    category: 'Политика',
-    title: 'Международный саммит завершился подписанием важных соглашений',
-    excerpt: 'Лидеры стран достигли консенсуса по ключевым вопросам глобальной повестки',
-    image: 'https://cdn.poehali.dev/projects/7ba64612-b62d-469b-894e-0aa0d8ed8b67/files/1973fddd-8c29-474c-a491-765c172eeba6.jpg',
-    time: '4 часа назад',
-    isHot: true
-  },
-  {
-    id: 3,
-    category: 'Спорт',
-    title: 'Сенсация в мировом футболе: неожиданная победа в финале',
-    excerpt: 'Андердог турнира одержал историческую победу над фаворитом',
-    image: 'https://cdn.poehali.dev/projects/7ba64612-b62d-469b-894e-0aa0d8ed8b67/files/1b126098-3950-4bdf-9d55-07b9c0ea29bf.jpg',
-    time: '5 часов назад',
-    isHot: false
-  },
-  {
-    id: 4,
-    category: 'Экономика',
-    title: 'Рынки показывают рост на фоне позитивных экономических данных',
-    excerpt: 'Аналитики прогнозируют продолжение позитивной динамики в ближайшие месяцы',
-    image: 'https://cdn.poehali.dev/projects/7ba64612-b62d-469b-894e-0aa0d8ed8b67/files/1973fddd-8c29-474c-a491-765c172eeba6.jpg',
-    time: '6 часов назад',
-    isHot: false
-  },
-  {
-    id: 5,
-    category: 'Культура',
-    title: 'Новая выставка современного искусства открывается в столице',
-    excerpt: 'Знаковое культурное событие привлекает внимание ценителей со всего мира',
-    image: 'https://cdn.poehali.dev/projects/7ba64612-b62d-469b-894e-0aa0d8ed8b67/files/8fac879f-524b-4bf5-920d-81a447401b6e.jpg',
-    time: '8 часов назад',
-    isHot: false
-  },
-  {
-    id: 6,
-    category: 'Общество',
-    title: 'Социальная инициатива объединяет тысячи волонтеров',
-    excerpt: 'Масштабная акция помощи показывает силу общественной солидарности',
-    image: 'https://cdn.poehali.dev/projects/7ba64612-b62d-469b-894e-0aa0d8ed8b67/files/1b126098-3950-4bdf-9d55-07b9c0ea29bf.jpg',
-    time: '10 часов назад',
-    isHot: false
-  }
-];
+const API_URL = 'https://functions.poehali.dev/f9026a29-c4a5-479e-9712-5966f2b1a425';
+
+const formatTime = (isoDate: string) => {
+  if (!isoDate) return 'Недавно';
+  const date = new Date(isoDate);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  
+  if (diffHours < 1) return 'Только что';
+  if (diffHours < 24) return `${diffHours} ${diffHours === 1 ? 'час' : diffHours < 5 ? 'часа' : 'часов'} назад`;
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays} ${diffDays === 1 ? 'день' : diffDays < 5 ? 'дня' : 'дней'} назад`;
+};
 
 const Index = () => {
   const [activeCategory, setActiveCategory] = useState('Главная');
   const [menuOpen, setMenuOpen] = useState(false);
+  const [news, setNews] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredNews = activeCategory === 'Главная' 
-    ? newsData 
-    : newsData.filter(news => news.category === activeCategory);
+  useEffect(() => {
+    fetchNews();
+  }, [activeCategory]);
+
+  const fetchNews = async () => {
+    setLoading(true);
+    try {
+      const url = activeCategory === 'Главная' 
+        ? API_URL 
+        : `${API_URL}?category=${encodeURIComponent(activeCategory)}`;
+      
+      const response = await fetch(url);
+      const data = await response.json();
+      setNews(data.news || []);
+    } catch (error) {
+      console.error('Ошибка загрузки новостей:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredNews = news;
 
   return (
     <div className="min-h-screen bg-background">
@@ -154,55 +133,60 @@ const Index = () => {
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredNews.map((news, index) => (
-            <Card 
-              key={news.id} 
-              className="group overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer border-0 animate-fade-in"
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              <div className="relative overflow-hidden">
-                <img 
-                  src={news.image} 
-                  alt={news.title}
-                  className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                {news.isHot && (
-                  <Badge className="absolute top-4 left-4 bg-primary text-white gap-1">
-                    <Icon name="Flame" size={14} />
-                    Горячее
-                  </Badge>
-                )}
-                <div className="absolute top-4 right-4">
-                  <Badge variant="secondary" className="bg-white/90 text-foreground backdrop-blur-sm">
-                    {news.category}
-                  </Badge>
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <Icon name="Loader2" size={48} className="animate-spin text-primary" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredNews.map((newsItem, index) => (
+              <Card 
+                key={newsItem.id} 
+                className="group overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer border-0 animate-fade-in"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <div className="relative overflow-hidden">
+                  <img 
+                    src={newsItem.image || 'https://cdn.poehali.dev/projects/7ba64612-b62d-469b-894e-0aa0d8ed8b67/files/1973fddd-8c29-474c-a491-765c172eeba6.jpg'} 
+                    alt={newsItem.title}
+                    className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  {newsItem.isHot && (
+                    <Badge className="absolute top-4 left-4 bg-primary text-white gap-1">
+                      <Icon name="Flame" size={14} />
+                      Горячее
+                    </Badge>
+                  )}
+                  <div className="absolute top-4 right-4">
+                    <Badge variant="secondary" className="bg-white/90 text-foreground backdrop-blur-sm">
+                      {newsItem.category}
+                    </Badge>
+                  </div>
                 </div>
-              </div>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
-                  <Icon name="Clock" size={14} />
-                  {news.time}
-                </div>
-                <h3 className="text-xl font-bold mb-3 group-hover:text-primary transition-colors leading-tight">
-                  {news.title}
-                </h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  {news.excerpt}
-                </p>
-                <Button 
-                  variant="ghost" 
-                  className="mt-4 p-0 h-auto font-semibold text-primary hover:bg-transparent group/btn"
-                >
-                  Читать далее
-                  <Icon name="ArrowRight" size={16} className="ml-2 group-hover/btn:translate-x-1 transition-transform" />
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {filteredNews.length === 0 && (
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
+                    <Icon name="Clock" size={14} />
+                    {formatTime(newsItem.time)}
+                  </div>
+                  <h3 className="text-xl font-bold mb-3 group-hover:text-primary transition-colors leading-tight">
+                    {newsItem.title}
+                  </h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    {newsItem.excerpt}
+                  </p>
+                  <Button 
+                    variant="ghost" 
+                    className="mt-4 p-0 h-auto font-semibold text-primary hover:bg-transparent group/btn"
+                  >
+                    Читать далее
+                    <Icon name="ArrowRight" size={16} className="ml-2 group-hover/btn:translate-x-1 transition-transform" />
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+        {!loading && filteredNews.length === 0 && (
           <div className="text-center py-20">
             <Icon name="FileX" size={64} className="mx-auto text-muted-foreground mb-4" />
             <h3 className="text-xl font-semibold mb-2">Новостей не найдено</h3>
