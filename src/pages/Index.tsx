@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import Icon from '@/components/ui/icon';
+import AutoNewsButton from '@/components/AutoNewsButton';
 
 const categories = [
   { name: 'Главная', icon: 'Home' },
@@ -32,6 +34,7 @@ const formatTime = (isoDate: string) => {
 };
 
 const Index = () => {
+  const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('Главная');
   const [menuOpen, setMenuOpen] = useState(false);
   const [news, setNews] = useState<any[]>([]);
@@ -120,6 +123,7 @@ const Index = () => {
             </nav>
 
             <div className="hidden lg:flex items-center gap-2">
+              <AutoNewsButton onNewsCreated={fetchNews} />
               <Button variant="ghost" size="icon">
                 <Icon name="Search" size={20} />
               </Button>
@@ -170,6 +174,7 @@ const Index = () => {
                 key={newsItem.id} 
                 className="group overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer border-0 animate-fade-in"
                 style={{ animationDelay: `${index * 100}ms` }}
+                onClick={() => navigate(`/news/${newsItem.id}`)}
               >
                 <div className="relative overflow-hidden">
                   <img 
@@ -219,25 +224,20 @@ const Index = () => {
                   <p className="text-muted-foreground text-sm leading-relaxed">
                     {newsItem.excerpt}
                   </p>
-                  {expandedNewsId === newsItem.id && newsItem.content && (
-                    <div className="mt-4 pt-4 border-t border-border animate-fade-in">
-                      <p className="text-foreground leading-relaxed whitespace-pre-line">
-                        {newsItem.content}
-                      </p>
-                    </div>
-                  )}
-                  <Button 
-                    variant="ghost" 
-                    className="mt-4 p-0 h-auto font-semibold text-primary hover:bg-transparent group/btn"
-                    onClick={() => setExpandedNewsId(expandedNewsId === newsItem.id ? null : newsItem.id)}
+                  <div 
+                    className="mt-4 p-0 h-auto font-semibold text-primary hover:bg-transparent group/btn inline-flex items-center cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/news/${newsItem.id}`);
+                    }}
                   >
-                    {expandedNewsId === newsItem.id ? 'Свернуть' : 'Читать далее'}
+                    Читать далее
                     <Icon 
-                      name={expandedNewsId === newsItem.id ? "ChevronUp" : "ArrowRight"} 
+                      name="ArrowRight" 
                       size={16} 
-                      className={`ml-2 transition-transform ${expandedNewsId === newsItem.id ? '' : 'group-hover/btn:translate-x-1'}`} 
+                      className="ml-2 group-hover/btn:translate-x-1 transition-transform" 
                     />
-                  </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}

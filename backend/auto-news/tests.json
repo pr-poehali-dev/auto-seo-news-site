@@ -1,0 +1,25 @@
+{
+  "tests": [
+    {
+      "name": "Create 1 news article",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "count": 1,
+        "category": "Технологии"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true,
+        "created": 1
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "OPTIONS request for CORS",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    }
+  ]
+}
