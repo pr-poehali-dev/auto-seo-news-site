@@ -4,6 +4,8 @@ import { Helmet } from 'react-helmet-async';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
+import SEOHead from '@/components/SEOHead';
+import StructuredData from '@/components/StructuredData';
 
 const API_URL = 'https://functions.poehali.dev/f9026a29-c4a5-479e-9712-5966f2b1a425';
 
@@ -73,48 +75,37 @@ const NewsPage = () => {
     );
   }
 
+  const currentUrl = window.location.href;
+  
   return (
     <div className="min-h-screen bg-background">
-      <Helmet>
-        <title>{news.title || 'Новость'} | НОВОСТИ 24</title>
-        <meta name="description" content={news.excerpt || ''} />
-        <meta name="keywords" content={`${news.category?.toLowerCase() || 'новости'}, новости, россия, ${news.title || ''}`} />
-        
-        <meta property="og:type" content="article" />
-        <meta property="og:title" content={news.title || 'Новость'} />
-        <meta property="og:description" content={news.excerpt || ''} />
-        <meta property="og:image" content={news.image || ''} />
-        <meta property="article:published_time" content={news.time || ''} />
-        <meta property="article:section" content={news.category || ''} />
-        
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={news.title || 'Новость'} />
-        <meta name="twitter:description" content={news.excerpt || ''} />
-        <meta name="twitter:image" content={news.image || ''} />
-        
-        <link rel="canonical" href={window.location.href} />
-        
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "NewsArticle",
-            "headline": news.title,
-            "description": news.excerpt,
-            "image": news.image,
-            "datePublished": news.time,
-            "author": {
-              "@type": "Organization",
-              "name": "НОВОСТИ 24"
-            },
-            "publisher": {
-              "@type": "Organization",
-              "name": "НОВОСТИ 24"
-            },
-            "articleSection": news.category,
-            "articleBody": news.content
-          })}
-        </script>
-      </Helmet>
+      <SEOHead 
+        title={news.meta_title || news.title || 'Новость'}
+        description={news.meta_description || news.excerpt || ''}
+        keywords={news.meta_keywords || `${news.category}, новости россии`}
+        ogImage={news.image_url || news.image || ''}
+        ogType="article"
+        publishedTime={news.published_at || news.time}
+        author={news.author || 'Редакция'}
+        canonicalUrl={currentUrl}
+      />
+      
+      <StructuredData 
+        type="NewsArticle"
+        data={{
+          headline: news.title,
+          description: news.excerpt,
+          image: news.image_url || news.image,
+          datePublished: news.published_at || news.time,
+          dateModified: news.updated_at || news.published_at || news.time,
+          author: news.author || 'Редакция',
+          publisher: {
+            name: 'НОВОСТИ 24',
+            logo: '/logo.png'
+          },
+          url: currentUrl
+        }}
+      />
 
       <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border shadow-sm">
         <div className="container mx-auto px-4">

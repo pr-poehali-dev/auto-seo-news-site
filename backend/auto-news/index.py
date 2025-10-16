@@ -65,25 +65,36 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         news_created = 0
         
         for i in range(count):
-            prompt = f"""Создай новость для категории "{category}". 
+            prompt = f"""Создай новость для категории "{category}" с SEO-оптимизацией. 
 Формат ответа строго JSON:
 {{
-  "title": "Заголовок новости (максимум 100 символов)",
-  "excerpt": "Краткое описание новости (2-3 предложения, максимум 200 символов)",
-  "content": "Полный текст новости (3-5 абзацев, максимум 1000 символов)",
-  "category": "{category}"
+  "title": "Заголовок новости (50-70 символов, включи ключевые слова)",
+  "excerpt": "Краткое описание (150-160 символов, продающее, с ключевыми словами)",
+  "content": "Полный текст новости (3-5 абзацев, 800-1200 символов, структурированный)",
+  "category": "{category}",
+  "meta_title": "SEO заголовок (50-60 символов, с ключевыми словами)",
+  "meta_description": "SEO описание (150-160 символов, призыв к действию)",
+  "meta_keywords": "ключевое слово 1, ключевое слово 2, ключевое слово 3",
+  "slug": "url-friendly-slug-na-russkom"
 }}
 
-Новость должна быть актуальной, интересной и реалистичной. Пиши на русском языке."""
+Требования к SEO:
+- Заголовок должен быть цепляющим и содержать главное ключевое слово
+- Meta description должен побуждать кликнуть
+- Keywords - 3-5 релевантных ключевых слов через запятую
+- Slug - короткий, понятный URL на кириллице (5-7 слов максимум)
+- Контент структурированный, с естественным вхождением ключевых слов
+
+Пиши на русском языке."""
 
             response = client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
                 messages=[
-                    {"role": "system", "content": "Ты опытный журналист, создающий качественные новости."},
+                    {"role": "system", "content": "Ты опытный SEO-журналист, создающий новости для топ-5 в поисковиках. Твои новости всегда оптимизированы под поисковые запросы."},
                     {"role": "user", "content": prompt}
                 ],
-                temperature=0.8,
-                max_tokens=1500
+                temperature=0.7,
+                max_tokens=2000
             )
             
             news_data = json.loads(response.choices[0].message.content)
@@ -92,6 +103,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             excerpt = news_data.get('excerpt', '')
             content = news_data.get('content', '')
             news_category = news_data.get('category', category)
+            meta_title = news_data.get('meta_title', title)
+            meta_description = news_data.get('meta_description', excerpt)
+            meta_keywords = news_data.get('meta_keywords', category)
+            slug = news_data.get('slug', '')
             
             image = f"https://cdn.poehali.dev/projects/7ba64612-b62d-469b-894e-0aa0d8ed8b67/files/default-news-{random.randint(1,6)}.jpg"
             
@@ -100,12 +115,19 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             is_hot = random.choice([True, False, False])
             
+            if not slug:
+                slug = title.lower().replace(' ', '-').replace(',', '').replace('.', '')[:100]
+            
             insert_query = """
-                INSERT INTO news (title, excerpt, content, category, image, time, "isHot")
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                INSERT INTO news (title, excerpt, content, category, image_url, published_at, is_hot, 
+                                  meta_title, meta_description, meta_keywords, slug, author)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """
             
-            cur.execute(insert_query, (title, excerpt, content, news_category, image, published_time, is_hot))
+            cur.execute(insert_query, (
+                title, excerpt, content, news_category, image, published_time, is_hot,
+                meta_title, meta_description, meta_keywords, slug, 'Редакция'
+            ))
             news_created += 1
         
         conn.commit()

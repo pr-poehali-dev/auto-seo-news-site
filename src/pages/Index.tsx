@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import Icon from '@/components/ui/icon';
 import AutoNewsButton from '@/components/AutoNewsButton';
+import SEOHead from '@/components/SEOHead';
+import StructuredData from '@/components/StructuredData';
 
 const categories = [
   { name: 'Главная', icon: 'Home' },
@@ -72,24 +74,26 @@ const Index = () => {
     ? 'Последние новости дня: политика, экономика, технологии, спорт, культура. Оперативные новости России и мира 24/7'
     : `Актуальные новости категории ${activeCategory}. Свежие материалы, аналитика и репортажи 24/7`;
 
+  const currentUrl = window.location.href;
+  
   return (
     <div className="min-h-screen bg-background">
-      <Helmet>
-        <title>{pageTitle}</title>
-        <meta name="description" content={pageDescription} />
-        <meta name="keywords" content={`новости, ${activeCategory.toLowerCase()}, россия, мир, онлайн, сегодня, свежие новости, последние новости`} />
-        
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content={pageDescription} />
-        <meta property="og:site_name" content="НОВОСТИ 24" />
-        
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={pageTitle} />
-        <meta name="twitter:description" content={pageDescription} />
-        
-        <link rel="canonical" href={window.location.href} />
-      </Helmet>
+      <SEOHead 
+        title={pageTitle}
+        description={pageDescription}
+        keywords={`новости, ${activeCategory.toLowerCase()}, россия, мир, онлайн, сегодня, свежие новости, последние новости`}
+        ogType="website"
+        canonicalUrl={currentUrl}
+      />
+      
+      <StructuredData 
+        type="WebSite"
+        data={{
+          name: 'НОВОСТИ 24',
+          url: currentUrl.split('?')[0],
+          description: 'Актуальные новости России и мира. Политика, экономика, спорт, технологии, культура. Свежие новости каждый день.'
+        }}
+      />
       <header className="sticky top-0 z-50 bg-white border-b border-border shadow-sm">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
