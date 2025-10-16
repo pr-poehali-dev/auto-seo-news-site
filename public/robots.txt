@@ -1,4 +1,13 @@
+# robots.txt для НОВОСТИ 24
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+
 User-agent: Googlebot
+Allow: /
+
+User-agent: Yandex
 Allow: /
 
 User-agent: Bingbot
@@ -10,5 +19,8 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
-User-agent: *
-Allow: /
+# Карта сайта (обновите URL после публикации)
+Sitemap: https://news24.ru/sitemap.xml
+
+# Скорость обхода
+Crawl-delay: 1

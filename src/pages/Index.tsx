@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -60,8 +61,32 @@ const Index = () => {
 
   const filteredNews = news;
 
+  const pageTitle = activeCategory === 'Главная' 
+    ? 'НОВОСТИ 24 - Актуальные новости России и мира'
+    : `${activeCategory} - Новости | НОВОСТИ 24`;
+  
+  const pageDescription = activeCategory === 'Главная'
+    ? 'Последние новости дня: политика, экономика, технологии, спорт, культура. Оперативные новости России и мира 24/7'
+    : `Актуальные новости категории ${activeCategory}. Свежие материалы, аналитика и репортажи 24/7`;
+
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDescription} />
+        <meta name="keywords" content={`новости, ${activeCategory.toLowerCase()}, россия, мир, онлайн, сегодня, свежие новости, последние новости`} />
+        
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDescription} />
+        <meta property="og:site_name" content="НОВОСТИ 24" />
+        
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={pageDescription} />
+        
+        <link rel="canonical" href={window.location.href} />
+      </Helmet>
       <header className="sticky top-0 z-50 bg-white border-b border-border shadow-sm">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
@@ -165,6 +190,25 @@ const Index = () => {
                   </div>
                 </div>
                 <CardContent className="p-6">
+                  <script type="application/ld+json">
+                    {JSON.stringify({
+                      "@context": "https://schema.org",
+                      "@type": "NewsArticle",
+                      "headline": newsItem.title,
+                      "description": newsItem.excerpt,
+                      "image": newsItem.image,
+                      "datePublished": newsItem.time,
+                      "author": {
+                        "@type": "Organization",
+                        "name": "НОВОСТИ 24"
+                      },
+                      "publisher": {
+                        "@type": "Organization",
+                        "name": "НОВОСТИ 24"
+                      },
+                      "articleSection": newsItem.category
+                    })}
+                  </script>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
                     <Icon name="Clock" size={14} />
                     {formatTime(newsItem.time)}
