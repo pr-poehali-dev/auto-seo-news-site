@@ -34,12 +34,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     try:
-        openai_key = os.environ.get('OPENAI_API_KEY')
-        if not openai_key:
+        groq_key = os.environ.get('GROQ_API_KEY')
+        if not groq_key:
             return {
                 'statusCode': 500,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'error': 'OPENAI_API_KEY not configured'})
+                'body': json.dumps({'error': 'GROQ_API_KEY not configured'})
             }
         
         db_url = os.environ.get('DATABASE_URL')
@@ -50,8 +50,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'DATABASE_URL not configured'})
             }
         
-        import openai
-        openai.api_key = openai_key
+        from groq import Groq
+        client = Groq(api_key=groq_key)
         
         categories = ['Политика', 'Экономика', 'Технологии', 'Спорт', 'Культура', 'Мир', 'Общество']
         
@@ -76,8 +76,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
 Новость должна быть актуальной, интересной и реалистичной. Пиши на русском языке."""
 
-            response = openai.chat.completions.create(
-                model="gpt-4o-mini",
+            response = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
                 messages=[
                     {"role": "system", "content": "Ты опытный журналист, создающий качественные новости."},
                     {"role": "user", "content": prompt}
