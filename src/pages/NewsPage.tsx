@@ -77,8 +77,8 @@ const NewsPage = () => {
     <div className="min-h-screen bg-background">
       <Helmet>
         <title>{news.title} | НОВОСТИ 24</title>
-        <meta name="description" content={news.excerpt} />
-        <meta name="keywords" content={`${news.category.toLowerCase()}, новости, россия, ${news.title}`} />
+        <meta name="description" content={news.excerpt || ''} />
+        <meta name="keywords" content={`${news.category?.toLowerCase() || 'новости'}, новости, россия, ${news.title}`} />
         
         <meta property="og:type" content="article" />
         <meta property="og:title" content={news.title} />
