@@ -71,6 +71,20 @@ export default function SEOHead({
       link.href = canonicalUrl;
     }
     
+    const ensureLinkTag = (rel: string, href: string, type?: string) => {
+      let link = document.querySelector(`link[rel="${rel}"]`) as HTMLLinkElement;
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = rel;
+        if (type) link.type = type;
+        document.head.appendChild(link);
+      }
+      link.href = href;
+    };
+    
+    ensureLinkTag('alternate', '/rss.xml', 'application/rss+xml');
+    ensureLinkTag('sitemap', '/sitemap.xml', 'application/xml');
+    
   }, [title, description, keywords, ogImage, ogType, publishedTime, author, canonicalUrl]);
   
   return null;

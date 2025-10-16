@@ -1,0 +1,11 @@
+{
+  "tests": [{
+    "name": "RSS feed generation",
+    "method": "GET",
+    "path": "/",
+    "expectedStatus": 200,
+    "expectedHeaders": {
+      "Content-Type": "application/rss+xml; charset=utf-8"
+    }
+  }]
+}
