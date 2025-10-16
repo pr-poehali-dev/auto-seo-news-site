@@ -35,6 +35,7 @@ const Index = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [news, setNews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedNewsId, setExpandedNewsId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchNews();
@@ -174,12 +175,24 @@ const Index = () => {
                   <p className="text-muted-foreground text-sm leading-relaxed">
                     {newsItem.excerpt}
                   </p>
+                  {expandedNewsId === newsItem.id && newsItem.content && (
+                    <div className="mt-4 pt-4 border-t border-border animate-fade-in">
+                      <p className="text-foreground leading-relaxed whitespace-pre-line">
+                        {newsItem.content}
+                      </p>
+                    </div>
+                  )}
                   <Button 
                     variant="ghost" 
                     className="mt-4 p-0 h-auto font-semibold text-primary hover:bg-transparent group/btn"
+                    onClick={() => setExpandedNewsId(expandedNewsId === newsItem.id ? null : newsItem.id)}
                   >
-                    Читать далее
-                    <Icon name="ArrowRight" size={16} className="ml-2 group-hover/btn:translate-x-1 transition-transform" />
+                    {expandedNewsId === newsItem.id ? 'Свернуть' : 'Читать далее'}
+                    <Icon 
+                      name={expandedNewsId === newsItem.id ? "ChevronUp" : "ArrowRight"} 
+                      size={16} 
+                      className={`ml-2 transition-transform ${expandedNewsId === newsItem.id ? '' : 'group-hover/btn:translate-x-1'}`} 
+                    />
                   </Button>
                 </CardContent>
               </Card>
