@@ -7,20 +7,20 @@ import random
 import requests
 
 def get_random_image(category: str) -> str:
-    '''Получает случайное изображение через Unsplash API'''
+    '''Получает случайное изображение через LoremFlickr (доступен в РФ)'''
     queries = {
-        'IT': 'programming,code,developer',
-        'Игры': 'gaming,esports,videogames',
-        'Экономика': 'business,finance,money',
-        'Технологии': 'technology,innovation,tech',
-        'Спорт': 'sports,competition,athlete',
-        'Культура': 'art,culture,museum',
-        'Мир': 'world,international,globe'
+        'IT': 'technology,computer',
+        'Игры': 'gaming,esports',
+        'Экономика': 'business,finance',
+        'Технологии': 'technology,innovation',
+        'Спорт': 'sports,athlete',
+        'Культура': 'art,culture',
+        'Мир': 'city,world'
     }
     
     query = queries.get(category, 'news')
-    random_num = random.randint(1, 1000)
-    return f'https://source.unsplash.com/1200x800/?{query}&sig={random_num}'
+    random_num = random.randint(1, 99999)
+    return f'https://loremflickr.com/1200/800/{query}?random={random_num}'
 
 def title_exists(cursor, title: str) -> bool:
     '''Проверяет, существует ли новость с таким заголовком'''
