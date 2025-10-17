@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import Icon from '@/components/ui/icon';
-import AutoNewsButton from '@/components/AutoNewsButton';
+import AutoNewsGenerator from '@/components/AutoNewsGenerator';
 import SEOHead from '@/components/SEOHead';
 import StructuredData from '@/components/StructuredData';
 
@@ -78,6 +78,7 @@ const Index = () => {
   
   return (
     <div className="min-h-screen bg-background">
+      <AutoNewsGenerator onNewsCreated={fetchNews} />
       <SEOHead 
         title={pageTitle}
         description={pageDescription}
@@ -127,7 +128,6 @@ const Index = () => {
             </nav>
 
             <div className="hidden lg:flex items-center gap-2">
-              <AutoNewsButton onNewsCreated={fetchNews} />
               <Button variant="ghost" size="icon">
                 <Icon name="Search" size={20} />
               </Button>

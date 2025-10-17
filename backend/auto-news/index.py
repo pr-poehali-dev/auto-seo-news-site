@@ -7,20 +7,18 @@ import random
 import requests
 
 def get_random_image(category: str) -> str:
-    '''Получает случайное изображение из Picsum Photos'''
-    category_ranges = {
-        'Игры': (200, 250),
-        'Экономика': (300, 350),
-        'Технологии': (400, 450),
-        'Спорт': (500, 550),
-        'Культура': (600, 650),
-        'Мир': (700, 750)
+    '''Получает случайное изображение через Unsplash API'''
+    queries = {
+        'Игры': 'gaming esports',
+        'Экономика': 'business finance',
+        'Технологии': 'technology innovation',
+        'Спорт': 'sports competition',
+        'Культура': 'art culture',
+        'Мир': 'world news'
     }
     
-    range_start, range_end = category_ranges.get(category, (100, 150))
-    random_id = random.randint(range_start, range_end)
-    
-    return f'https://picsum.photos/id/{random_id}/1200/800'
+    query = queries.get(category, 'news')
+    return f'https://source.unsplash.com/1200x800/?{query}'
 
 def title_exists(cursor, title: str) -> bool:
     '''Проверяет, существует ли новость с таким заголовком'''
