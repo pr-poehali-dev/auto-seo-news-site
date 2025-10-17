@@ -16,12 +16,16 @@ const AutoNewsButton = ({ onNewsCreated }: AutoNewsButtonProps) => {
   const generateNews = async () => {
     setLoading(true);
     
-    toast({
-      title: "🚀 Генерация началась",
-      description: "Создаю 28 актуальных новостей с изображениями. Это займет 2-3 минуты...",
+    const { dismiss } = toast({
+      title: "🚀 Генерация новостей",
+      description: "Создаю 28 актуальных новостей с изображениями... Пожалуйста, подождите 2-3 минуты.",
+      duration: Infinity,
     });
     
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 180000);
+      
       const response = await fetch(AUTO_NEWS_URL, {
         method: 'POST',
         headers: {
@@ -29,33 +33,50 @@ const AutoNewsButton = ({ onNewsCreated }: AutoNewsButtonProps) => {
         },
         body: JSON.stringify({
           count: 28
-        })
+        }),
+        signal: controller.signal
       });
 
+      clearTimeout(timeoutId);
       const data = await response.json();
 
       if (response.ok) {
+        dismiss();
         toast({
           title: "✅ Готово!",
-          description: `Добавлено ${data.created} новостей с уникальными картинками`,
+          description: `Добавлено ${data.created} новостей с картинками`,
+          duration: 5000,
         });
         
         if (onNewsCreated) {
           setTimeout(onNewsCreated, 500);
         }
       } else {
+        dismiss();
         toast({
           title: "❌ Ошибка",
           description: data.error || "Не удалось создать новости",
-          variant: "destructive"
+          variant: "destructive",
+          duration: 5000,
         });
       }
     } catch (error) {
-      toast({
-        title: "❌ Ошибка",
-        description: "Не удалось подключиться к серверу",
-        variant: "destructive"
-      });
+      dismiss();
+      if (error instanceof Error && error.name === 'AbortError') {
+        toast({
+          title: "⏱️ Превышено время ожидания",
+          description: "Генерация заняла слишком много времени. Попробуйте снова.",
+          variant: "destructive",
+          duration: 5000,
+        });
+      } else {
+        toast({
+          title: "❌ Ошибка",
+          description: "Не удалось подключиться к серверу",
+          variant: "destructive",
+          duration: 5000,
+        });
+      }
     } finally {
       setLoading(false);
     }

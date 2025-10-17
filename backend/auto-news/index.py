@@ -6,23 +6,22 @@ from datetime import datetime
 import random
 import requests
 
-def get_unsplash_image(category: str) -> str:
-    '''Получает случайное изображение из Unsplash Source API по категории'''
-    search_queries = {
-        'Политика': ['government', 'politics', 'official', 'parliament', 'flag'],
-        'Экономика': ['business', 'finance', 'economy', 'chart', 'money'],
-        'Технологии': ['technology', 'computer', 'innovation', 'ai', 'tech'],
-        'Спорт': ['sports', 'stadium', 'competition', 'athlete', 'fitness'],
-        'Культура': ['culture', 'art', 'museum', 'exhibition', 'painting'],
-        'Мир': ['world', 'globe', 'international', 'earth', 'travel'],
-        'Общество': ['society', 'people', 'community', 'city', 'crowd']
+def get_random_image(category: str) -> str:
+    '''Получает случайное изображение из Picsum Photos'''
+    category_ranges = {
+        'Политика': (200, 250),
+        'Экономика': (300, 350),
+        'Технологии': (400, 450),
+        'Спорт': (500, 550),
+        'Культура': (600, 650),
+        'Мир': (700, 750),
+        'Общество': (800, 850)
     }
     
-    keywords = search_queries.get(category, ['news'])
-    random_keyword = random.choice(keywords)
-    random_seed = random.randint(1, 10000)
+    range_start, range_end = category_ranges.get(category, (100, 150))
+    random_id = random.randint(range_start, range_end)
     
-    return f'https://source.unsplash.com/1200x800/?{random_keyword}&sig={random_seed}'
+    return f'https://picsum.photos/id/{random_id}/1200/800'
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
@@ -146,7 +145,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 meta_keywords = news_data.get('meta_keywords', category)
                 slug = news_data.get('slug', '')
                 
-                image = get_unsplash_image(category)
+                image = get_random_image(category)
                 
                 published_time = datetime.now().isoformat()
                 is_hot = random.choice([True, False, False, False])
