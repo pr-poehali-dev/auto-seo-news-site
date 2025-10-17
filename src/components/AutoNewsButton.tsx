@@ -19,7 +19,7 @@ const AutoNewsButton = ({ onNewsCreated }: AutoNewsButtonProps) => {
     setLoading(true);
     setProgress(0);
     
-    const totalNews = 10;
+    const totalNews = 3;
     
     const { dismiss } = toast({
       title: "🚀 Генерация новостей",
@@ -124,12 +124,12 @@ const AutoNewsButton = ({ onNewsCreated }: AutoNewsButtonProps) => {
       {loading ? (
         <>
           <Icon name="Loader2" size={16} className="animate-spin" />
-          Генерирую {Math.floor((progress / 100) * 10)}/10...
+          Генерирую {Math.floor((progress / 100) * 3)}/3...
         </>
       ) : (
         <>
           <Icon name="Sparkles" size={16} />
-          Создать 10 новостей
+          Создать 3 новости
         </>
       )}
     </Button>

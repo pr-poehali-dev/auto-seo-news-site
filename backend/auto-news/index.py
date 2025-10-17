@@ -65,7 +65,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         categories = ['Игры', 'Экономика', 'Технологии', 'Спорт', 'Культура', 'Мир', 'Общество']
         
         body_data = json.loads(event.get('body', '{}'))
-        total_count = min(body_data.get('count', 10), 10)
+        total_count = min(body_data.get('count', 3), 3)
         
         conn = psycopg2.connect(db_url)
         cur = conn.cursor()
