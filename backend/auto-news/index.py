@@ -6,48 +6,23 @@ from datetime import datetime
 import random
 import requests
 
-def get_unsplash_image(category: str, unsplash_key: str) -> str:
-    '''Получает случайное изображение из Unsplash API по категории'''
+def get_unsplash_image(category: str) -> str:
+    '''Получает случайное изображение из Unsplash Source API по категории'''
     search_queries = {
-        'Политика': 'government politics official',
-        'Экономика': 'business finance economy',
-        'Технологии': 'technology innovation computer',
-        'Спорт': 'sports stadium competition',
-        'Культура': 'culture art museum',
-        'Мир': 'world globe international',
-        'Общество': 'society people community'
+        'Политика': ['government', 'politics', 'official', 'parliament', 'flag'],
+        'Экономика': ['business', 'finance', 'economy', 'chart', 'money'],
+        'Технологии': ['technology', 'computer', 'innovation', 'ai', 'tech'],
+        'Спорт': ['sports', 'stadium', 'competition', 'athlete', 'fitness'],
+        'Культура': ['culture', 'art', 'museum', 'exhibition', 'painting'],
+        'Мир': ['world', 'globe', 'international', 'earth', 'travel'],
+        'Общество': ['society', 'people', 'community', 'city', 'crowd']
     }
     
-    query = search_queries.get(category, 'news')
+    keywords = search_queries.get(category, ['news'])
+    random_keyword = random.choice(keywords)
+    random_seed = random.randint(1, 10000)
     
-    try:
-        response = requests.get(
-            'https://api.unsplash.com/photos/random',
-            params={
-                'query': query,
-                'orientation': 'landscape',
-                'client_id': unsplash_key
-            },
-            timeout=10
-        )
-        
-        if response.status_code == 200:
-            data = response.json()
-            return data['urls']['regular']
-    except:
-        pass
-    
-    fallback_images = {
-        'Политика': 'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=1200',
-        'Экономика': 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=1200',
-        'Технологии': 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1200',
-        'Спорт': 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=1200',
-        'Культура': 'https://images.unsplash.com/photo-1499781350541-7783f6c6a0c8?w=1200',
-        'Мир': 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200',
-        'Общество': 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=1200'
-    }
-    
-    return fallback_images.get(category, 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=1200')
+    return f'https://source.unsplash.com/1200x800/?{random_keyword}&sig={random_seed}'
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
@@ -80,7 +55,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     try:
         db_url = os.environ.get('DATABASE_URL')
         api_key = os.environ.get('DEEPSEEK_API_KEY')
-        unsplash_key = os.environ.get('UNSPLASH_ACCESS_KEY')
         
         if not db_url or not api_key:
             return {
@@ -151,7 +125,18 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 if content_text.endswith('```'):
                     content_text = content_text[:-3]
                 
-                news_data = json.loads(content_text.strip())
+                content_text = content_text.strip()
+                
+                try:
+                    news_data = json.loads(content_text)
+                except json.JSONDecodeError:
+                    first_brace = content_text.find('{')
+                    last_brace = content_text.rfind('}')
+                    if first_brace != -1 and last_brace != -1:
+                        content_text = content_text[first_brace:last_brace+1]
+                        news_data = json.loads(content_text)
+                    else:
+                        raise
                 
                 title = news_data.get('title', 'Новость')
                 excerpt = news_data.get('excerpt', '')
@@ -161,10 +146,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 meta_keywords = news_data.get('meta_keywords', category)
                 slug = news_data.get('slug', '')
                 
-                if unsplash_key:
-                    image = get_unsplash_image(category, unsplash_key)
-                else:
-                    image = get_unsplash_image(category, '')
+                image = get_unsplash_image(category)
                 
                 published_time = datetime.now().isoformat()
                 is_hot = random.choice([True, False, False, False])
