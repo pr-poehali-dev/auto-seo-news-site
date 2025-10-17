@@ -46,6 +46,12 @@ const Index = () => {
 
   useEffect(() => {
     fetchNews();
+    
+    const pollInterval = setInterval(() => {
+      fetchNewsSilently();
+    }, 30000);
+    
+    return () => clearInterval(pollInterval);
   }, [activeCategory]);
 
   const fetchNews = async () => {
@@ -59,13 +65,33 @@ const Index = () => {
       const data = await response.json();
       setNews(data.news || []);
       
-      if (activeCategory === 'Главная') {
-        setTotalNewsCount(data.news?.length || 0);
-      }
+      const countUrl = `${API_URL}?limit=1000`;
+      const countResponse = await fetch(countUrl);
+      const countData = await countResponse.json();
+      setTotalNewsCount(countData.news?.length || 0);
     } catch (error) {
       console.error('Ошибка загрузки новостей:', error);
     } finally {
       setLoading(false);
+    }
+  };
+  
+  const fetchNewsSilently = async () => {
+    try {
+      const url = activeCategory === 'Главная' 
+        ? API_URL 
+        : `${API_URL}?category=${encodeURIComponent(activeCategory)}`;
+      
+      const response = await fetch(url);
+      const data = await response.json();
+      setNews(data.news || []);
+      
+      const countUrl = `${API_URL}?limit=1000`;
+      const countResponse = await fetch(countUrl);
+      const countData = await countResponse.json();
+      setTotalNewsCount(countData.news?.length || 0);
+    } catch (error) {
+      console.error('Ошибка фоновой загрузки:', error);
     }
   };
 

@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
+import { useEffect, useState, useRef } from 'react';
 
 const AUTO_NEWS_URL = 'https://functions.poehali.dev/110a45c8-d0f9-42fd-93e3-ffc41cad489b';
 const INTERVAL_MS = 2 * 60 * 1000;
@@ -10,6 +9,7 @@ interface AutoNewsGeneratorProps {
 
 const AutoNewsGenerator = ({ onNewsCreated }: AutoNewsGeneratorProps) => {
   const [isGenerating, setIsGenerating] = useState(false);
+  const silentMode = useRef(false);
 
   const generateNews = async () => {
     if (isGenerating) return;
@@ -29,7 +29,7 @@ const AutoNewsGenerator = ({ onNewsCreated }: AutoNewsGeneratorProps) => {
 
       const data = await response.json();
       
-      if (data.success) {
+      if (data.success && !silentMode.current) {
         onNewsCreated();
       }
     } catch (error) {
@@ -43,6 +43,7 @@ const AutoNewsGenerator = ({ onNewsCreated }: AutoNewsGeneratorProps) => {
     generateNews();
     
     const interval = setInterval(() => {
+      silentMode.current = true;
       generateNews();
     }, INTERVAL_MS);
 

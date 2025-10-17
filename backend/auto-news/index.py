@@ -7,18 +7,31 @@ import random
 import requests
 
 def get_random_image(category: str) -> str:
-    '''Получает заглушку картинки (потом можно заменить)'''
-    placeholders = {
-        'IT': 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=1200&h=800&fit=crop',
-        'Игры': 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=1200&h=800&fit=crop',
-        'Экономика': 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&h=800&fit=crop',
-        'Технологии': 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&h=800&fit=crop',
-        'Спорт': 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=1200&h=800&fit=crop',
-        'Культура': 'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=1200&h=800&fit=crop',
-        'Мир': 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&h=800&fit=crop'
+    '''Получает изображение через DummyImage (работает везде)'''
+    colors = {
+        'IT': '4A90E2',
+        'Игры': 'E24A90',
+        'Экономика': '50C878',
+        'Технологии': '9B59B6',
+        'Спорт': 'F39C12',
+        'Культура': 'E74C3C',
+        'Мир': '3498DB'
     }
     
-    return placeholders.get(category, 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=1200&h=800&fit=crop')
+    texts = {
+        'IT': 'IT%20%D0%BD%D0%BE%D0%B2%D0%BE%D1%81%D1%82%D0%B8',
+        'Игры': '%D0%98%D0%B3%D1%80%D1%8B',
+        'Экономика': '%D0%AD%D0%BA%D0%BE%D0%BD%D0%BE%D0%BC%D0%B8%D0%BA%D0%B0',
+        'Технологии': '%D0%A2%D0%B5%D1%85%D0%BD%D0%BE%D0%BB%D0%BE%D0%B3%D0%B8%D0%B8',
+        'Спорт': '%D0%A1%D0%BF%D0%BE%D1%80%D1%82',
+        'Культура': '%D0%9A%D1%83%D0%BB%D1%8C%D1%82%D1%83%D1%80%D0%B0',
+        'Мир': '%D0%9C%D0%B8%D1%80'
+    }
+    
+    color = colors.get(category, '333333')
+    text = texts.get(category, 'News')
+    
+    return f'https://dummyimage.com/1200x800/{color}/ffffff&text={text}'
 
 def title_exists(cursor, title: str) -> bool:
     '''Проверяет, существует ли новость с таким заголовком'''
