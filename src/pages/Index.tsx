@@ -13,6 +13,7 @@ const categories = [
   { name: 'Главная', icon: 'Home' },
   { name: 'IT', icon: 'Code' },
   { name: 'Игры', icon: 'Gamepad2' },
+  { name: 'Криптовалюта', icon: 'Bitcoin' },
   { name: 'Экономика', icon: 'TrendingUp' },
   { name: 'Технологии', icon: 'Cpu' },
   { name: 'Спорт', icon: 'Trophy' },
@@ -24,15 +25,25 @@ const API_URL = 'https://functions.poehali.dev/f9026a29-c4a5-479e-9712-5966f2b1a
 
 const formatTime = (isoDate: string) => {
   if (!isoDate) return 'Недавно';
-  const date = new Date(isoDate);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
   
-  if (diffHours < 1) return 'Только что';
-  if (diffHours < 24) return `${diffHours} ${diffHours === 1 ? 'час' : diffHours < 5 ? 'часа' : 'часов'} назад`;
-  const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays} ${diffDays === 1 ? 'день' : diffDays < 5 ? 'дня' : 'дней'} назад`;
+  try {
+    const date = new Date(isoDate);
+    if (isNaN(date.getTime())) return 'Недавно';
+    
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    
+    if (diffMinutes < 1) return 'Только что';
+    if (diffMinutes < 60) return `${diffMinutes} ${diffMinutes === 1 ? 'минуту' : diffMinutes < 5 ? 'минуты' : 'минут'} назад`;
+    if (diffHours < 24) return `${diffHours} ${diffHours === 1 ? 'час' : diffHours < 5 ? 'часа' : 'часов'} назад`;
+    
+    const diffDays = Math.floor(diffHours / 24);
+    return `${diffDays} ${diffDays === 1 ? 'день' : diffDays < 5 ? 'дня' : 'дней'} назад`;
+  } catch {
+    return 'Недавно';
+  }
 };
 
 const Index = () => {
@@ -212,8 +223,8 @@ const Index = () => {
             {filteredNews.map((newsItem, index) => (
               <Card 
                 key={newsItem.id} 
-                className="group overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer border-0 animate-fade-in"
-                style={{ animationDelay: `${index * 100}ms` }}
+                className="group overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer border-0 animate-slide-in-up"
+                style={{ animationDelay: `${index * 50}ms` }}
                 onClick={() => navigate(`/news/${newsItem.id}`)}
               >
                 <div className="relative overflow-hidden bg-muted">
