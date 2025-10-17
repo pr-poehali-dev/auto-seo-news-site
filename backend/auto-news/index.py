@@ -4,6 +4,7 @@ import psycopg2
 from typing import Dict, Any
 from datetime import datetime, timedelta
 import random
+import requests
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
@@ -42,6 +43,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'DATABASE_URL not configured'})
             }
         
+        api_key = os.environ.get('DEEPSEEK_API_KEY')
+        if not api_key:
+            return {
+                'statusCode': 500,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'error': 'DEEPSEEK_API_KEY not configured'})
+            }
+        
         categories = ['Политика', 'Экономика', 'Технологии', 'Спорт', 'Культура', 'Мир', 'Общество']
         
         body_data = json.loads(event.get('body', '{}'))
@@ -53,69 +62,56 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         news_created = 0
         
-        templates = {
-            'Политика': [
-                {'title': 'Новые законопроекты обсудят в Госдуме', 'excerpt': 'Депутаты подготовили пакет важных инициатив для рассмотрения'},
-                {'title': 'Политические эксперты прогнозируют важные изменения', 'excerpt': 'Аналитики оценивают возможные реформы в ближайшие месяцы'},
-                {'title': 'Международная встреча лидеров завершилась соглашением', 'excerpt': 'Главы государств достигли консенсуса по ключевым вопросам'}
-            ],
-            'Экономика': [
-                {'title': 'Экономисты прогнозируют рост ВВП в следующем квартале', 'excerpt': 'Позитивные показатели могут указывать на улучшение ситуации'},
-                {'title': 'Центробанк объявил о новых мерах поддержки бизнеса', 'excerpt': 'Программа направлена на помощь малому и среднему предпринимательству'},
-                {'title': 'Инвестиции в технологии достигли рекордных значений', 'excerpt': 'Венчурные фонды активно вкладывают в стартапы и инновации'}
-            ],
-            'Технологии': [
-                {'title': 'Новый AI-помощник представлен российской компанией', 'excerpt': 'Разработка обещает революцию в сфере автоматизации бизнеса'},
-                {'title': 'Квантовые компьютеры приближаются к массовому рынку', 'excerpt': 'Ученые сообщают о прорыве в области квантовых вычислений'},
-                {'title': 'Российские программисты создали защищенный мессенджер', 'excerpt': 'Новое приложение гарантирует полную конфиденциальность переписки'}
-            ],
-            'Спорт': [
-                {'title': 'Российские спортсмены готовятся к международным соревнованиям', 'excerpt': 'Сборная проводит интенсивные тренировки перед стартом чемпионата'},
-                {'title': 'Футбольный клуб объявил о трансфере нового игрока', 'excerpt': 'Подписание контракта усилит состав команды на важные матчи'},
-                {'title': 'Олимпийский чемпион поделился планами на новый сезон', 'excerpt': 'Спортсмен нацелен побить собственный рекорд в ближайших стартах'}
-            ],
-            'Культура': [
-                {'title': 'Премьера нового российского фильма собрала полные залы', 'excerpt': 'Зрители высоко оценили работу режиссера и актерского состава'},
-                {'title': 'Музей открывает выставку современного искусства', 'excerpt': 'Экспозиция представит работы талантливых российских художников'},
-                {'title': 'Известный писатель анонсировал выход новой книги', 'excerpt': 'Роман обещает стать литературным событием года'}
-            ],
-            'Мир': [
-                {'title': 'Международная организация приняла важную резолюцию', 'excerpt': 'Решение направлено на улучшение глобального сотрудничества'},
-                {'title': 'Ученые обнаружили новый вид животных в тропиках', 'excerpt': 'Открытие поможет лучше понять биоразнообразие планеты'},
-                {'title': 'Космическое агентство планирует запуск новой миссии', 'excerpt': 'Экспедиция займется исследованием дальних планет'}
-            ],
-            'Общество': [
-                {'title': 'Социологи провели опрос о качестве жизни населения', 'excerpt': 'Исследование показало положительную динамику по ключевым показателям'},
-                {'title': 'Благотворительный фонд запустил программу помощи', 'excerpt': 'Инициатива направлена на поддержку нуждающихся семей'},
-                {'title': 'Волонтеры организовали масштабную акцию в городском парке', 'excerpt': 'Мероприятие объединило жителей разных возрастов'}
-            ]
-        }
-        
         for i in range(count):
-            category_templates = templates.get(category, templates['Общество'])
-            template = random.choice(category_templates)
+            prompt = f"""Создай новость для категории "{category}" в формате JSON:
+{{
+  "title": "Заголовок (50-70 символов)",
+  "excerpt": "Краткое описание (150-160 символов)",
+  "content": "Полный текст (800-1200 символов, 3-5 абзацев)",
+  "category": "{category}",
+  "meta_title": "SEO заголовок (50-60 символов)",
+  "meta_description": "SEO описание (150-160 символов)",
+  "meta_keywords": "ключевое слово 1, ключевое слово 2, ключевое слово 3",
+  "slug": "url-friendly-slug"
+}}
+
+Требования:
+- Актуальная новость на русском языке
+- SEO-оптимизация
+- Структурированный контент
+- Естественное вхождение ключевых слов"""
+
+            response = requests.post(
+                'https://openrouter.ai/api/v1/chat/completions',
+                headers={
+                    'Authorization': f'Bearer {api_key}',
+                    'Content-Type': 'application/json'
+                },
+                json={
+                    'model': 'deepseek/deepseek-chat',
+                    'messages': [
+                        {'role': 'system', 'content': 'Ты опытный SEO-журналист, создающий новости для топ-5 в поисковиках.'},
+                        {'role': 'user', 'content': prompt}
+                    ],
+                    'temperature': 0.7,
+                    'max_tokens': 2000
+                },
+                timeout=30
+            )
             
-            title = template['title']
-            excerpt = template['excerpt']
+            response.raise_for_status()
+            result = response.json()
             
-            content_paragraphs = [
-                f"Сегодня стало известно о важном событии в сфере '{category}'. {excerpt}",
-                f"По информации источников, это может стать значимым шагом для дальнейшего развития отрасли. Эксперты отмечают высокую актуальность данной темы.",
-                f"Аналитики прогнозируют, что последствия этого события будут ощутимы в ближайшее время. Многие специалисты уже начали обсуждение возможных сценариев развития.",
-                f"В заключение стоит отметить, что данная новость привлекла внимание широкой аудитории. Подробности будут известны в ближайшие дни."
-            ]
-            content = '\n\n'.join(content_paragraphs)
+            content_text = result['choices'][0]['message']['content']
+            content_text = content_text.strip()
+            if content_text.startswith('```json'):
+                content_text = content_text[7:]
+            if content_text.startswith('```'):
+                content_text = content_text[3:]
+            if content_text.endswith('```'):
+                content_text = content_text[:-3]
             
-            news_data = {
-                'title': title,
-                'excerpt': excerpt,
-                'content': content,
-                'category': category,
-                'meta_title': title,
-                'meta_description': excerpt,
-                'meta_keywords': f'{category}, новости, россия',
-                'slug': title.lower().replace(' ', '-').replace(',', '').replace('.', '')[:100]
-            }
+            news_data = json.loads(content_text.strip())
             
             title = news_data.get('title', 'Новость')
             excerpt = news_data.get('excerpt', '')
