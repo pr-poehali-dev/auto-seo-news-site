@@ -15,6 +15,12 @@ const AutoNewsButton = ({ onNewsCreated }: AutoNewsButtonProps) => {
 
   const generateNews = async () => {
     setLoading(true);
+    
+    toast({
+      title: "🚀 Генерация началась",
+      description: "Создаю 28 актуальных новостей с изображениями. Это займет 2-3 минуты...",
+    });
+    
     try {
       const response = await fetch(AUTO_NEWS_URL, {
         method: 'POST',
@@ -22,7 +28,7 @@ const AutoNewsButton = ({ onNewsCreated }: AutoNewsButtonProps) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          count: 3
+          count: 28
         })
       });
 
@@ -30,8 +36,8 @@ const AutoNewsButton = ({ onNewsCreated }: AutoNewsButtonProps) => {
 
       if (response.ok) {
         toast({
-          title: "✅ Новости созданы!",
-          description: `Добавлено ${data.created} новых новостей в категории ${data.category}`,
+          title: "✅ Готово!",
+          description: `Добавлено ${data.created} новостей с уникальными картинками`,
         });
         
         if (onNewsCreated) {
@@ -64,12 +70,12 @@ const AutoNewsButton = ({ onNewsCreated }: AutoNewsButtonProps) => {
       {loading ? (
         <>
           <Icon name="Loader2" size={16} className="animate-spin" />
-          Создаю новости...
+          Генерирую 28 новостей...
         </>
       ) : (
         <>
           <Icon name="Sparkles" size={16} />
-          Добавить новости
+          Создать 28 новостей
         </>
       )}
     </Button>
