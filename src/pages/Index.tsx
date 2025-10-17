@@ -11,13 +11,13 @@ import StructuredData from '@/components/StructuredData';
 
 const categories = [
   { name: 'Главная', icon: 'Home' },
+  { name: 'IT', icon: 'Code' },
   { name: 'Игры', icon: 'Gamepad2' },
   { name: 'Экономика', icon: 'TrendingUp' },
   { name: 'Технологии', icon: 'Cpu' },
   { name: 'Спорт', icon: 'Trophy' },
   { name: 'Культура', icon: 'Palette' },
-  { name: 'Мир', icon: 'Globe' },
-  { name: 'Общество', icon: 'Users' }
+  { name: 'Мир', icon: 'Globe' }
 ];
 
 const API_URL = 'https://functions.poehali.dev/f9026a29-c4a5-479e-9712-5966f2b1a425';

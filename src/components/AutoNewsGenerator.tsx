@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 const AUTO_NEWS_URL = 'https://functions.poehali.dev/110a45c8-d0f9-42fd-93e3-ffc41cad489b';
-const INTERVAL_MS = 30 * 60 * 1000;
+const INTERVAL_MS = 2 * 60 * 1000;
 
 interface AutoNewsGeneratorProps {
   onNewsCreated: () => void;

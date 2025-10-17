@@ -9,16 +9,18 @@ import requests
 def get_random_image(category: str) -> str:
     '''Получает случайное изображение через Unsplash API'''
     queries = {
-        'Игры': 'gaming esports',
-        'Экономика': 'business finance',
-        'Технологии': 'technology innovation',
-        'Спорт': 'sports competition',
-        'Культура': 'art culture',
-        'Мир': 'world news'
+        'IT': 'programming,code,developer',
+        'Игры': 'gaming,esports,videogames',
+        'Экономика': 'business,finance,money',
+        'Технологии': 'technology,innovation,tech',
+        'Спорт': 'sports,competition,athlete',
+        'Культура': 'art,culture,museum',
+        'Мир': 'world,international,globe'
     }
     
     query = queries.get(category, 'news')
-    return f'https://source.unsplash.com/1200x800/?{query}'
+    random_num = random.randint(1, 1000)
+    return f'https://source.unsplash.com/1200x800/?{query}&sig={random_num}'
 
 def title_exists(cursor, title: str) -> bool:
     '''Проверяет, существует ли новость с таким заголовком'''
@@ -68,7 +70,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'Missing configuration'})
             }
         
-        all_categories = ['Игры', 'Экономика', 'Технологии', 'Спорт', 'Культура', 'Мир']
+        all_categories = ['IT', 'Игры', 'Экономика', 'Технологии', 'Спорт', 'Культура', 'Мир']
         category = random.choice(all_categories)
         categories = [category]
         
