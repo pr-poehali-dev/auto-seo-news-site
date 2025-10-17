@@ -9,9 +9,10 @@ interface AutoNewsGeneratorProps {
 
 const AutoNewsGenerator = ({ onNewsCreated }: AutoNewsGeneratorProps) => {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [initialCheckDone, setInitialCheckDone] = useState(false);
   const silentMode = useRef(false);
 
-  const generateNews = async () => {
+  const generateNews = async (bulkCreate = false) => {
     if (isGenerating) return;
     
     setIsGenerating(true);
@@ -20,7 +21,7 @@ const AutoNewsGenerator = ({ onNewsCreated }: AutoNewsGeneratorProps) => {
       const response = await fetch(AUTO_NEWS_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({})
+        body: JSON.stringify({ bulk_create: bulkCreate })
       });
 
       if (!response.ok) {
@@ -39,8 +40,26 @@ const AutoNewsGenerator = ({ onNewsCreated }: AutoNewsGeneratorProps) => {
     }
   };
 
+  const checkAndGenerateInitial = async () => {
+    try {
+      const response = await fetch('https://functions.poehali.dev/f9026a29-c4a5-479e-9712-5966f2b1a425');
+      const data = await response.json();
+      
+      if (!data.news || data.news.length === 0) {
+        await generateNews(true);
+      } else {
+        await generateNews(false);
+      }
+      
+      setInitialCheckDone(true);
+    } catch (error) {
+      console.error('Ошибка проверки:', error);
+      setInitialCheckDone(true);
+    }
+  };
+
   useEffect(() => {
-    generateNews();
+    checkAndGenerateInitial();
     
     const interval = setInterval(() => {
       silentMode.current = true;

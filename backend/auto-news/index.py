@@ -22,8 +22,8 @@ def title_exists(cursor, title: str) -> bool:
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
-    Business: Генерирует 1 уникальную новость в случайной категории без дубликатов
-    Args: event - dict с httpMethod, body
+    Business: Генерирует новости (1 случайная или массовое заполнение всех категорий)
+    Args: event - dict с httpMethod, body (bulk_create: true для массовой генерации)
           context - object с request_id, function_name
     Returns: HTTP response с количеством созданных новостей
     '''
@@ -59,9 +59,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'Missing configuration'})
             }
         
+        body_data = json.loads(event.get('body', '{}'))
+        bulk_create = body_data.get('bulk_create', False)
+        
         all_categories = ['IT', 'Игры', 'Экономика', 'Технологии', 'Спорт', 'Культура', 'Мир', 'Криптовалюта']
-        category = random.choice(all_categories)
-        categories = [category]
+        
+        if bulk_create:
+            categories = all_categories * 2
+        else:
+            category = random.choice(all_categories)
+            categories = [category]
         
         conn = psycopg2.connect(db_url)
         cur = conn.cursor()
