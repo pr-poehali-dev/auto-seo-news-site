@@ -19,13 +19,15 @@ const AutoNewsButton = ({ onNewsCreated }: AutoNewsButtonProps) => {
     setLoading(true);
     setProgress(0);
     
+    const totalNews = 10;
+    
     const { dismiss } = toast({
       title: "🚀 Генерация новостей",
       description: (
         <div className="space-y-2">
-          <p>Создаю 28 актуальных новостей...</p>
+          <p>Создаю {totalNews} актуальных новостей...</p>
           <Progress value={0} className="w-full" id="news-progress" />
-          <p className="text-sm text-muted-foreground">0 из 28</p>
+          <p className="text-sm text-muted-foreground">0 из {totalNews}</p>
         </div>
       ),
       duration: Infinity,
@@ -33,23 +35,23 @@ const AutoNewsButton = ({ onNewsCreated }: AutoNewsButtonProps) => {
     
     const progressInterval = setInterval(() => {
       setProgress(prev => {
-        const newProgress = Math.min(prev + (100 / 28), 95);
+        const newProgress = Math.min(prev + (100 / totalNews), 95);
         const progressElement = document.querySelector('#news-progress');
         if (progressElement) {
           progressElement.setAttribute('value', String(newProgress));
         }
-        const currentCount = Math.floor((newProgress / 100) * 28);
+        const currentCount = Math.floor((newProgress / 100) * totalNews);
         const textElement = document.querySelector('#news-progress')?.parentElement?.querySelector('.text-sm');
         if (textElement) {
-          textElement.textContent = `${currentCount} из 28`;
+          textElement.textContent = `${currentCount} из ${totalNews}`;
         }
         return newProgress;
       });
-    }, 4500);
+    }, 2000);
     
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 180000);
+      const timeoutId = setTimeout(() => controller.abort(), 120000);
       
       const response = await fetch(AUTO_NEWS_URL, {
         method: 'POST',
@@ -57,7 +59,7 @@ const AutoNewsButton = ({ onNewsCreated }: AutoNewsButtonProps) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          count: 28
+          count: totalNews
         }),
         signal: controller.signal
       });
@@ -122,12 +124,12 @@ const AutoNewsButton = ({ onNewsCreated }: AutoNewsButtonProps) => {
       {loading ? (
         <>
           <Icon name="Loader2" size={16} className="animate-spin" />
-          Генерирую {Math.floor((progress / 100) * 28)}/28...
+          Генерирую {Math.floor((progress / 100) * 10)}/10...
         </>
       ) : (
         <>
           <Icon name="Sparkles" size={16} />
-          Создать 28 новостей
+          Создать 10 новостей
         </>
       )}
     </Button>
