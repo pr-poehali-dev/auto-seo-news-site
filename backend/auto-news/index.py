@@ -124,32 +124,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             meta_keywords = news_data.get('meta_keywords', category)
             slug = news_data.get('slug', '')
             
-            image_prompts = {
-                'Политика': 'Professional government building with flags, official meeting, modern architecture, photorealistic',
-                'Экономика': 'Business charts on screens, stock market, financial data, modern office, photorealistic',
-                'Технологии': 'Modern technology lab, AI circuits, futuristic interface, innovation, photorealistic',
-                'Спорт': 'Sports stadium, athletic competition, championship event, dynamic action, photorealistic',
-                'Культура': 'Art gallery with paintings, museum interior, cultural exhibition, photorealistic',
-                'Мир': 'Earth globe, world map with lights, international cooperation, photorealistic',
-                'Общество': 'Community gathering, people interaction, modern city square, photorealistic'
+            default_images = {
+                'Политика': 'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=800',
+                'Экономика': 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800',
+                'Технологии': 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800',
+                'Спорт': 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=800',
+                'Культура': 'https://images.unsplash.com/photo-1499781350541-7783f6c6a0c8?w=800',
+                'Мир': 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800',
+                'Общество': 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=800'
             }
             
-            image_prompt = image_prompts.get(category, 'Modern news broadcast, journalism studio, photorealistic')
-            
-            try:
-                flux_api_url = 'https://api.poehali.dev/flux/generate'
-                img_response = requests.post(
-                    flux_api_url,
-                    json={'prompt': image_prompt},
-                    timeout=90
-                )
-                if img_response.status_code == 200:
-                    result = img_response.json()
-                    image = result.get('url', f"https://cdn.poehali.dev/projects/7ba64612-b62d-469b-894e-0aa0d8ed8b67/files/default-news-{random.randint(1,6)}.jpg")
-                else:
-                    image = f"https://cdn.poehali.dev/projects/7ba64612-b62d-469b-894e-0aa0d8ed8b67/files/default-news-{random.randint(1,6)}.jpg"
-            except:
-                image = f"https://cdn.poehali.dev/projects/7ba64612-b62d-469b-894e-0aa0d8ed8b67/files/default-news-{random.randint(1,6)}.jpg"
+            image = default_images.get(category, 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800')
             
             published_time = datetime.now().isoformat()
             
