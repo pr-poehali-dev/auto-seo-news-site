@@ -42,6 +42,7 @@ const Index = () => {
   const [news, setNews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedNewsId, setExpandedNewsId] = useState<number | null>(null);
+  const [totalNewsCount, setTotalNewsCount] = useState(0);
 
   useEffect(() => {
     fetchNews();
@@ -57,6 +58,10 @@ const Index = () => {
       const response = await fetch(url);
       const data = await response.json();
       setNews(data.news || []);
+      
+      if (activeCategory === 'Главная') {
+        setTotalNewsCount(data.news?.length || 0);
+      }
     } catch (error) {
       console.error('Ошибка загрузки новостей:', error);
     } finally {
@@ -102,7 +107,12 @@ const Index = () => {
               <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
                 <Icon name="Newspaper" className="text-white" size={24} />
               </div>
-              <h1 className="text-2xl font-bold text-foreground">НОВОСТИ 24</h1>
+              <div>
+                <h1 className="text-2xl font-bold text-foreground">НОВОСТИ 24</h1>
+                {totalNewsCount > 0 && (
+                  <p className="text-xs text-muted-foreground">Всего {totalNewsCount} новостей</p>
+                )}
+              </div>
             </div>
 
             <button 

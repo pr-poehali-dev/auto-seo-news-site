@@ -25,7 +25,7 @@ def get_random_image(category: str) -> str:
 def title_exists(cursor, title: str) -> bool:
     '''Проверяет, существует ли новость с таким заголовком'''
     cursor.execute(
-        'SELECT COUNT(*) FROM news WHERE title = %s',
+        'SELECT COUNT(*) FROM t_p74494482_auto_seo_news_site.news WHERE title = %s',
         (title,)
     )
     result = cursor.fetchone()
@@ -164,7 +164,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     slug = title.lower().replace(' ', '-').replace(',', '').replace('.', '')[:100]
                 
                 insert_query = """
-                    INSERT INTO news (title, excerpt, content, category, image_url, published_at, is_hot, 
+                    INSERT INTO t_p74494482_auto_seo_news_site.news (title, excerpt, content, category, image_url, published_at, is_hot, 
                                       meta_title, meta_description, meta_keywords, slug, author)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """
