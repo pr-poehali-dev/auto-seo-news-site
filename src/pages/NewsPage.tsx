@@ -149,13 +149,20 @@ const NewsPage = () => {
             </div>
           </div>
 
-          {news.image && (
+          {news.image ? (
             <div className="mb-8 rounded-xl overflow-hidden">
               <img 
                 src={news.image} 
                 alt={news.title}
                 className="w-full h-auto object-cover"
+                onError={(e) => {
+                  e.currentTarget.src = 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800';
+                }}
               />
+            </div>
+          ) : (
+            <div className="mb-8 rounded-xl overflow-hidden bg-gradient-to-br from-primary/10 to-primary/5 h-96 flex items-center justify-center">
+              <Icon name="Image" size={64} className="text-muted-foreground" />
             </div>
           )}
 
@@ -192,12 +199,21 @@ const NewsPage = () => {
                   onClick={() => navigate(`/news/${item.id}`)}
                   className="group cursor-pointer"
                 >
-                  <div className="relative overflow-hidden rounded-lg mb-3">
-                    <img 
-                      src={item.image} 
-                      alt={item.title}
-                      className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
+                  <div className="relative overflow-hidden rounded-lg mb-3 bg-muted">
+                    {item.image ? (
+                      <img 
+                        src={item.image} 
+                        alt={item.title}
+                        className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          e.currentTarget.src = 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800';
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-40 flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
+                        <Icon name="Image" size={32} className="text-muted-foreground" />
+                      </div>
+                    )}
                   </div>
                   <h3 className="font-bold group-hover:text-primary transition-colors">
                     {item.title}

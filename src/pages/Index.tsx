@@ -180,12 +180,21 @@ const Index = () => {
                 style={{ animationDelay: `${index * 100}ms` }}
                 onClick={() => navigate(`/news/${newsItem.id}`)}
               >
-                <div className="relative overflow-hidden">
-                  <img 
-                    src={newsItem.image || 'https://cdn.poehali.dev/projects/7ba64612-b62d-469b-894e-0aa0d8ed8b67/files/1973fddd-8c29-474c-a491-765c172eeba6.jpg'} 
-                    alt={newsItem.title}
-                    className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
+                <div className="relative overflow-hidden bg-muted">
+                  {newsItem.image ? (
+                    <img 
+                      src={newsItem.image} 
+                      alt={newsItem.title}
+                      className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-500"
+                      onError={(e) => {
+                        e.currentTarget.src = 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800';
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-56 flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
+                      <Icon name="Image" size={48} className="text-muted-foreground" />
+                    </div>
+                  )}
                   {newsItem.isHot && (
                     <Badge className="absolute top-4 left-4 bg-primary text-white gap-1">
                       <Icon name="Flame" size={14} />
