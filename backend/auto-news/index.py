@@ -14,8 +14,7 @@ def get_random_image(category: str) -> str:
         'Технологии': (400, 450),
         'Спорт': (500, 550),
         'Культура': (600, 650),
-        'Мир': (700, 750),
-        'Общество': (800, 850)
+        'Мир': (700, 750)
     }
     
     range_start, range_end = category_ranges.get(category, (100, 150))
@@ -23,10 +22,19 @@ def get_random_image(category: str) -> str:
     
     return f'https://picsum.photos/id/{random_id}/1200/800'
 
+def title_exists(cursor, title: str) -> bool:
+    '''Проверяет, существует ли новость с таким заголовком'''
+    cursor.execute(
+        'SELECT COUNT(*) FROM news WHERE title = %s',
+        (title,)
+    )
+    result = cursor.fetchone()
+    return result[0] > 0
+
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
-    Business: Автоматически генерирует и добавляет актуальные новости в базу данных
-    Args: event - dict с httpMethod, body (count - количество новостей)
+    Business: Генерирует 1 уникальную новость в случайной категории без дубликатов
+    Args: event - dict с httpMethod, body
           context - object с request_id, function_name
     Returns: HTTP response с количеством созданных новостей
     '''
@@ -62,25 +70,22 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'Missing configuration'})
             }
         
-        categories = ['Игры', 'Экономика', 'Технологии', 'Спорт', 'Культура', 'Мир', 'Общество']
-        
-        body_data = json.loads(event.get('body', '{}'))
-        total_count = min(body_data.get('count', 3), 3)
+        all_categories = ['Игры', 'Экономика', 'Технологии', 'Спорт', 'Культура', 'Мир']
+        category = random.choice(all_categories)
+        categories = [category]
         
         conn = psycopg2.connect(db_url)
         cur = conn.cursor()
         
         news_created = 0
-        news_per_category = total_count // len(categories)
-        remainder = total_count % len(categories)
         
-        for idx, category in enumerate(categories):
-            count_for_category = news_per_category + (1 if idx < remainder else 0)
+        for category in categories:
+            max_attempts = 3
             
-            for i in range(count_for_category):
+            for attempt in range(max_attempts):
                 prompt = f"""Создай актуальную новость для категории "{category}" в формате JSON:
 {{
-  "title": "Интересный заголовок новости (50-70 символов)",
+  "title": "Уникальный заголовок новости (50-70 символов)",
   "excerpt": "Краткое описание сути новости (150-180 символов)",
   "content": "Подробный текст новости из 3-4 абзацев (1000-1500 символов). Каждый абзац начинается с новой строки.",
   "meta_title": "SEO заголовок с ключевыми словами (50-60 символов)",
@@ -91,6 +96,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
 Требования:
 - Новость должна быть актуальной на октябрь 2025 года
+- ОБЯЗАТЕЛЬНО уникальный заголовок, не повторяющийся с другими
 - Реалистичные события и факты
 - Естественный русский язык
 - SEO-оптимизация"""
@@ -104,10 +110,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     json={
                         'model': 'deepseek/deepseek-chat',
                         'messages': [
-                            {'role': 'system', 'content': 'Ты опытный журналист топовых российских СМИ. Пишешь актуальные новости.'},
+                            {'role': 'system', 'content': 'Ты опытный журналист топовых российских СМИ. Пишешь уникальные актуальные новости.'},
                             {'role': 'user', 'content': prompt}
                         ],
-                        'temperature': 0.8,
+                        'temperature': 0.9,
                         'max_tokens': 2500
                     },
                     timeout=30
@@ -135,9 +141,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         content_text = content_text[first_brace:last_brace+1]
                         news_data = json.loads(content_text)
                     else:
-                        raise
+                        continue
                 
                 title = news_data.get('title', 'Новость')
+                
+                if title_exists(cur, title):
+                    continue
+                
                 excerpt = news_data.get('excerpt', '')
                 content = news_data.get('content', '')
                 meta_title = news_data.get('meta_title', title)
@@ -164,6 +174,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     meta_title, meta_description, meta_keywords, slug, 'Редакция'
                 ))
                 news_created += 1
+                break
         
         conn.commit()
         cur.close()
@@ -176,7 +187,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({
                 'success': True,
                 'created': news_created,
-                'message': f'Создано {news_created} актуальных новостей'
+                'message': f'Создано {news_created} уникальных новостей'
             })
         }
         

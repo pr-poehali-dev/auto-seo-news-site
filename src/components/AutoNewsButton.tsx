@@ -19,13 +19,13 @@ const AutoNewsButton = ({ onNewsCreated }: AutoNewsButtonProps) => {
     setLoading(true);
     setProgress(0);
     
-    const totalNews = 3;
+    const totalNews = 1;
     
     const { dismiss } = toast({
       title: "🚀 Генерация новостей",
       description: (
         <div className="space-y-2">
-          <p>Создаю {totalNews} актуальных новостей...</p>
+          <p>Создаю уникальную новость...</p>
           <Progress value={0} className="w-full" id="news-progress" />
           <p className="text-sm text-muted-foreground">0 из {totalNews}</p>
         </div>
@@ -47,7 +47,7 @@ const AutoNewsButton = ({ onNewsCreated }: AutoNewsButtonProps) => {
         }
         return newProgress;
       });
-    }, 2000);
+    }, 10000);
     
     try {
       const controller = new AbortController();
@@ -124,12 +124,12 @@ const AutoNewsButton = ({ onNewsCreated }: AutoNewsButtonProps) => {
       {loading ? (
         <>
           <Icon name="Loader2" size={16} className="animate-spin" />
-          Генерирую {Math.floor((progress / 100) * 3)}/3...
+          Генерирую...
         </>
       ) : (
         <>
           <Icon name="Sparkles" size={16} />
-          Создать 3 новости
+          Создать новость
         </>
       )}
     </Button>

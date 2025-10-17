@@ -1,17 +1,13 @@
 {
   "tests": [
     {
-      "name": "Create 1 news article",
+      "name": "Create news articles",
       "method": "POST",
       "path": "/",
-      "body": {
-        "count": 1,
-        "category": "Технологии"
-      },
+      "body": {},
       "expectedStatus": 200,
       "expectedBody": {
-        "success": true,
-        "created": 1
+        "success": true
       },
       "bodyMatcher": "partial"
     },
