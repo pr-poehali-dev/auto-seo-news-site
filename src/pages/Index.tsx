@@ -119,7 +119,7 @@ const Index = () => {
   const currentUrl = window.location.href;
   
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <AutoNewsGenerator onNewsCreated={fetchNews} />
       <SEOHead 
         title={pageTitle}
@@ -207,7 +207,7 @@ const Index = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 flex-1">
         <div className="mb-8 animate-slide-up">
           <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-4 font-semibold">
             {activeCategory === 'Главная' ? 'Последние новости' : activeCategory}
@@ -312,7 +312,7 @@ const Index = () => {
         )}
       </main>
 
-      <footer className="bg-secondary text-secondary-foreground mt-16">
+      <footer className="bg-secondary text-secondary-foreground mt-auto">
         <div className="container mx-auto px-4 py-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>

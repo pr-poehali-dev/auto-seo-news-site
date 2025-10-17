@@ -7,22 +7,9 @@ import random
 import requests
 
 def get_random_image(category: str) -> str:
-    '''Получает изображение через Yandex Images'''
-    queries = {
-        'IT': 'программирование код',
-        'Игры': 'видеоигры киберспорт',
-        'Экономика': 'бизнес финансы',
-        'Технологии': 'технологии инновации',
-        'Спорт': 'спорт соревнования',
-        'Культура': 'искусство культура',
-        'Мир': 'мировые события',
-        'Криптовалюта': 'криптовалюта биткоин'
-    }
-    
-    query = queries.get(category, 'новости')
+    '''Получает случайное изображение через placeholder'''
     random_num = random.randint(1, 999)
-    
-    return f'https://yandex.ru/images/search?text={query}&img_url=1&rpt=image&pos={random_num}'
+    return f'https://picsum.photos/seed/{random_num}/800/400'
 
 def title_exists(cursor, title: str) -> bool:
     '''Проверяет, существует ли новость с таким заголовком'''
@@ -85,23 +72,18 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             max_attempts = 3
             
             for attempt in range(max_attempts):
-                prompt = f"""Создай актуальную новость для категории "{category}" в формате JSON:
+                prompt = f"""Создай новость категории "{category}" в JSON:
 {{
-  "title": "Уникальный заголовок новости (50-70 символов)",
-  "excerpt": "Краткое описание сути новости (250-300 символов)",
-  "content": "Подробный текст новости из 10-12 абзацев (~1500 слов, 10000-12000 символов). Каждый абзац из 5-7 предложений. Добавь цитаты экспертов, статистику, факты, аналитику, прогнозы. Стиль: журналистская статья.",
-  "meta_title": "SEO заголовок с ключевыми словами (50-60 символов)",
-  "meta_description": "SEO описание для поисковиков (150-160 символов)",
+  "title": "Заголовок (50-60 символов)",
+  "excerpt": "Краткое описание (200-250 символов)",
+  "content": "Подробный текст из 8-10 абзацев по 4-5 предложений (~1500 слов). Добавь цитаты, статистику, факты.",
+  "meta_title": "SEO заголовок (50-60 символов)",
+  "meta_description": "SEO описание (150-160 символов)",
   "meta_keywords": "ключ1, ключ2, ключ3, ключ4, ключ5",
-  "slug": "url-friendly-translit-slug"
+  "slug": "url-slug"
 }}
 
-Требования:
-- Новость должна быть актуальной на октябрь 2025 года
-- ОБЯЗАТЕЛЬНО уникальный заголовок, не повторяющийся с другими
-- Реалистичные события и факты
-- Естественный русский язык
-- SEO-оптимизация"""
+Требования: актуальность октябрь 2025, уникальный заголовок, естественный язык."""
 
                 response = requests.post(
                     'https://openrouter.ai/api/v1/chat/completions',
@@ -115,10 +97,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             {'role': 'system', 'content': 'Ты опытный журналист топовых российских СМИ. Пишешь уникальные актуальные новости.'},
                             {'role': 'user', 'content': prompt}
                         ],
-                        'temperature': 0.9,
-                        'max_tokens': 5000
+                        'temperature': 0.8,
+                        'max_tokens': 3000
                     },
-                    timeout=30
+                    timeout=20
                 )
                 
                 response.raise_for_status()
