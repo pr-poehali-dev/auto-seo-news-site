@@ -9,7 +9,7 @@ import requests
 def get_random_image(category: str) -> str:
     '''Получает случайное изображение из Picsum Photos'''
     category_ranges = {
-        'Политика': (200, 250),
+        'Игры': (200, 250),
         'Экономика': (300, 350),
         'Технологии': (400, 450),
         'Спорт': (500, 550),
@@ -62,7 +62,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'Missing configuration'})
             }
         
-        categories = ['Политика', 'Экономика', 'Технологии', 'Спорт', 'Культура', 'Мир', 'Общество']
+        categories = ['Игры', 'Экономика', 'Технологии', 'Спорт', 'Культура', 'Мир', 'Общество']
         
         body_data = json.loads(event.get('body', '{}'))
         total_count = body_data.get('count', 28)

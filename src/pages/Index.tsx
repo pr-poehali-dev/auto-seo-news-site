@@ -11,7 +11,7 @@ import StructuredData from '@/components/StructuredData';
 
 const categories = [
   { name: 'Главная', icon: 'Home' },
-  { name: 'Политика', icon: 'Landmark' },
+  { name: 'Игры', icon: 'Gamepad2' },
   { name: 'Экономика', icon: 'TrendingUp' },
   { name: 'Технологии', icon: 'Cpu' },
   { name: 'Спорт', icon: 'Trophy' },
