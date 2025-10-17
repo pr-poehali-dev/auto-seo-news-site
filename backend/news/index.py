@@ -7,10 +7,11 @@ Returns: HTTP response dict с новостями или статусом опе
 
 import json
 import os
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 from datetime import datetime
 import psycopg2
 from psycopg2.extras import RealDictCursor
+from psycopg2 import sql
 
 def get_db_connection():
     database_url = os.environ.get('DATABASE_URL')
@@ -21,6 +22,9 @@ def create_slug(title: str) -> str:
     slug = ''.join(c if c.isalnum() or c.isspace() else '' for c in slug)
     slug = '-'.join(slug.split())
     return slug[:100]
+
+def escape_string(value: str) -> str:
+    return value.replace("'", "''")
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     method: str = event.get('httpMethod', 'GET')
@@ -50,14 +54,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             offset = int(params.get('offset', 0))
             
             if news_id:
-                cursor.execute(
-                    '''SELECT id, title, excerpt, content, category, image_url, 
+                query = f"""SELECT id, title, excerpt, content, category, image_url, 
                        author, published_at, is_hot, views_count, slug,
                        meta_title, meta_description 
                        FROM t_p74494482_auto_seo_news_site.news 
-                       WHERE id = %s''',
-                    (news_id,)
-                )
+                       WHERE id = {int(news_id)}"""
+                cursor.execute(query)
                 news_item = cursor.fetchone()
                 cursor.close()
                 conn.close()
@@ -100,27 +102,23 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             
             if category and category != 'Главная':
-                cursor.execute(
-                    '''SELECT id, title, excerpt, content, category, image_url, 
+                escaped_category = escape_string(category)
+                query = f"""SELECT id, title, excerpt, content, category, image_url, 
                        author, published_at, is_hot, views_count, slug,
                        meta_title, meta_description 
                        FROM t_p74494482_auto_seo_news_site.news 
-                       WHERE category = %s 
+                       WHERE category = '{escaped_category}' 
                        ORDER BY published_at DESC 
-                       LIMIT %s OFFSET %s''',
-                    (category, limit, offset)
-                )
+                       LIMIT {limit} OFFSET {offset}"""
             else:
-                cursor.execute(
-                    '''SELECT id, title, excerpt, content, category, image_url, 
+                query = f"""SELECT id, title, excerpt, content, category, image_url, 
                        author, published_at, is_hot, views_count, slug,
                        meta_title, meta_description 
                        FROM t_p74494482_auto_seo_news_site.news 
                        ORDER BY published_at DESC 
-                       LIMIT %s OFFSET %s''',
-                    (limit, offset)
-                )
+                       LIMIT {limit} OFFSET {offset}"""
             
+            cursor.execute(query)
             news = cursor.fetchall()
             news_list = []
             for item in news:
@@ -183,25 +181,36 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             counter = 1
             
             while True:
+                escaped_slug = escape_string(slug_unique)
                 cursor.execute(
-                    'SELECT id FROM t_p74494482_auto_seo_news_site.news WHERE slug = %s',
-                    (slug_unique,)
+                    f"SELECT id FROM t_p74494482_auto_seo_news_site.news WHERE slug = '{escaped_slug}'"
                 )
                 if cursor.fetchone() is None:
                     break
                 slug_unique = f"{slug}-{counter}"
                 counter += 1
             
-            cursor.execute(
-                '''INSERT INTO t_p74494482_auto_seo_news_site.news 
+            escaped_title = escape_string(title)
+            escaped_excerpt = escape_string(excerpt)
+            escaped_content = escape_string(content)
+            escaped_category = escape_string(category)
+            escaped_image = escape_string(image_url)
+            escaped_author = escape_string(author)
+            escaped_slug = escape_string(slug_unique)
+            escaped_meta_title = escape_string(meta_title)
+            escaped_meta_desc = escape_string(meta_description)
+            escaped_meta_keys = escape_string(meta_keywords)
+            
+            query = f"""INSERT INTO t_p74494482_auto_seo_news_site.news 
                    (title, excerpt, content, category, image_url, author, is_hot, slug,
                     meta_title, meta_description, meta_keywords)
-                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                   RETURNING id, slug''',
-                (title, excerpt, content, category, image_url, author, is_hot, slug_unique,
-                 meta_title, meta_description, meta_keywords)
-            )
+                   VALUES ('{escaped_title}', '{escaped_excerpt}', '{escaped_content}', 
+                           '{escaped_category}', '{escaped_image}', '{escaped_author}', 
+                           {is_hot}, '{escaped_slug}', '{escaped_meta_title}', 
+                           '{escaped_meta_desc}', '{escaped_meta_keys}')
+                   RETURNING id, slug"""
             
+            cursor.execute(query)
             result = cursor.fetchone()
             conn.commit()
             cursor.close()
@@ -237,31 +246,43 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             
             update_fields = []
-            update_values = []
             
             for field in ['title', 'excerpt', 'content', 'category', 'image_url', 
-                         'author', 'is_hot', 'meta_title', 'meta_description', 'meta_keywords']:
+                         'author', 'meta_title', 'meta_description', 'meta_keywords']:
                 if field in body_data:
-                    update_fields.append(f"{field} = %s")
-                    update_values.append(body_data[field])
+                    escaped_value = escape_string(str(body_data[field]))
+                    update_fields.append(f"{field} = '{escaped_value}'")
+            
+            if 'is_hot' in body_data:
+                update_fields.append(f"is_hot = {body_data['is_hot']}")
             
             if 'title' in body_data:
-                update_fields.append("slug = %s")
-                update_values.append(create_slug(body_data['title']))
+                slug = create_slug(body_data['title'])
+                escaped_slug = escape_string(slug)
+                update_fields.append(f"slug = '{escaped_slug}'")
             
-            update_fields.append("updated_at = %s")
-            update_values.append(datetime.now())
+            update_fields.append(f"updated_at = '{datetime.now().isoformat()}'")
             
-            update_values.append(news_id)
+            query = f"""UPDATE t_p74494482_auto_seo_news_site.news 
+                       SET {', '.join(update_fields)}
+                       WHERE id = {int(news_id)}"""
             
-            cursor.execute(
-                f'''UPDATE t_p74494482_auto_seo_news_site.news 
-                    SET {', '.join(update_fields)}
-                    WHERE id = %s''',
-                update_values
-            )
-            
+            cursor.execute(query)
             conn.commit()
+            
+            if cursor.rowcount == 0:
+                cursor.close()
+                conn.close()
+                return {
+                    'statusCode': 404,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'body': json.dumps({'error': 'News not found'}),
+                    'isBase64Encoded': False
+                }
+            
             cursor.close()
             conn.close()
             
@@ -290,12 +311,23 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'isBase64Encoded': False
                 }
             
-            cursor.execute(
-                'DELETE FROM t_p74494482_auto_seo_news_site.news WHERE id = %s',
-                (news_id,)
-            )
-            
+            query = f"DELETE FROM t_p74494482_auto_seo_news_site.news WHERE id = {int(news_id)}"
+            cursor.execute(query)
             conn.commit()
+            
+            if cursor.rowcount == 0:
+                cursor.close()
+                conn.close()
+                return {
+                    'statusCode': 404,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'body': json.dumps({'error': 'News not found'}),
+                    'isBase64Encoded': False
+                }
+            
             cursor.close()
             conn.close()
             
@@ -319,7 +351,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'Method not allowed'}),
                 'isBase64Encoded': False
             }
-    
+            
     except Exception as e:
         return {
             'statusCode': 500,
