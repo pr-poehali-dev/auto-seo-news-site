@@ -5,6 +5,8 @@ from typing import Dict, Any
 from datetime import datetime, timedelta
 import random
 import requests
+import base64
+import time
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
@@ -122,10 +124,34 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             meta_keywords = news_data.get('meta_keywords', category)
             slug = news_data.get('slug', '')
             
-            image = f"https://cdn.poehali.dev/projects/7ba64612-b62d-469b-894e-0aa0d8ed8b67/files/default-news-{random.randint(1,6)}.jpg"
+            image_prompts = {
+                'Политика': 'Professional government building with flags, official meeting, modern architecture, photorealistic',
+                'Экономика': 'Business charts on screens, stock market, financial data, modern office, photorealistic',
+                'Технологии': 'Modern technology lab, AI circuits, futuristic interface, innovation, photorealistic',
+                'Спорт': 'Sports stadium, athletic competition, championship event, dynamic action, photorealistic',
+                'Культура': 'Art gallery with paintings, museum interior, cultural exhibition, photorealistic',
+                'Мир': 'Earth globe, world map with lights, international cooperation, photorealistic',
+                'Общество': 'Community gathering, people interaction, modern city square, photorealistic'
+            }
             
-            time_offset = random.randint(0, 48)
-            published_time = (datetime.now() - timedelta(hours=time_offset)).isoformat()
+            image_prompt = image_prompts.get(category, 'Modern news broadcast, journalism studio, photorealistic')
+            
+            try:
+                flux_api_url = 'https://api.poehali.dev/flux/generate'
+                img_response = requests.post(
+                    flux_api_url,
+                    json={'prompt': image_prompt},
+                    timeout=90
+                )
+                if img_response.status_code == 200:
+                    result = img_response.json()
+                    image = result.get('url', f"https://cdn.poehali.dev/projects/7ba64612-b62d-469b-894e-0aa0d8ed8b67/files/default-news-{random.randint(1,6)}.jpg")
+                else:
+                    image = f"https://cdn.poehali.dev/projects/7ba64612-b62d-469b-894e-0aa0d8ed8b67/files/default-news-{random.randint(1,6)}.jpg"
+            except:
+                image = f"https://cdn.poehali.dev/projects/7ba64612-b62d-469b-894e-0aa0d8ed8b67/files/default-news-{random.randint(1,6)}.jpg"
+            
+            published_time = datetime.now().isoformat()
             
             is_hot = random.choice([True, False, False])
             
