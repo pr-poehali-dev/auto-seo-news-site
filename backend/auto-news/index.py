@@ -7,20 +7,18 @@ import random
 import requests
 
 def get_random_image(category: str) -> str:
-    '''Получает случайное изображение через LoremFlickr (доступен в РФ)'''
-    queries = {
-        'IT': 'technology,computer',
-        'Игры': 'gaming,esports',
-        'Экономика': 'business,finance',
-        'Технологии': 'technology,innovation',
-        'Спорт': 'sports,athlete',
-        'Культура': 'art,culture',
-        'Мир': 'city,world'
+    '''Получает заглушку картинки (потом можно заменить)'''
+    placeholders = {
+        'IT': 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=1200&h=800&fit=crop',
+        'Игры': 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=1200&h=800&fit=crop',
+        'Экономика': 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&h=800&fit=crop',
+        'Технологии': 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&h=800&fit=crop',
+        'Спорт': 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=1200&h=800&fit=crop',
+        'Культура': 'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=1200&h=800&fit=crop',
+        'Мир': 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&h=800&fit=crop'
     }
     
-    query = queries.get(category, 'news')
-    random_num = random.randint(1, 99999)
-    return f'https://loremflickr.com/1200/800/{query}?random={random_num}'
+    return placeholders.get(category, 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=1200&h=800&fit=crop')
 
 def title_exists(cursor, title: str) -> bool:
     '''Проверяет, существует ли новость с таким заголовком'''
@@ -86,8 +84,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 prompt = f"""Создай актуальную новость для категории "{category}" в формате JSON:
 {{
   "title": "Уникальный заголовок новости (50-70 символов)",
-  "excerpt": "Краткое описание сути новости (150-180 символов)",
-  "content": "Подробный текст новости из 3-4 абзацев (1000-1500 символов). Каждый абзац начинается с новой строки.",
+  "excerpt": "Краткое описание сути новости (200-250 символов)",
+  "content": "Подробный текст новости из 6-8 абзацев (3000-4500 символов). Каждый абзац из 4-6 предложений. Добавь цитаты, статистику, мнения экспертов.",
   "meta_title": "SEO заголовок с ключевыми словами (50-60 символов)",
   "meta_description": "SEO описание для поисковиков (150-160 символов)",
   "meta_keywords": "ключ1, ключ2, ключ3, ключ4, ключ5",
@@ -114,7 +112,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             {'role': 'user', 'content': prompt}
                         ],
                         'temperature': 0.9,
-                        'max_tokens': 2500
+                        'max_tokens': 5000
                     },
                     timeout=30
                 )

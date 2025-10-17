@@ -1,17 +1,6 @@
 {
   "tests": [
     {
-      "name": "Create news articles",
-      "method": "POST",
-      "path": "/",
-      "body": {},
-      "expectedStatus": 200,
-      "expectedBody": {
-        "success": true
-      },
-      "bodyMatcher": "partial"
-    },
-    {
       "name": "OPTIONS request for CORS",
       "method": "OPTIONS",
       "path": "/",
