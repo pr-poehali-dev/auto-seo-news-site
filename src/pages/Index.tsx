@@ -8,6 +8,7 @@ import Icon from '@/components/ui/icon';
 import AutoNewsGenerator from '@/components/AutoNewsGenerator';
 import SEOHead from '@/components/SEOHead';
 import StructuredData from '@/components/StructuredData';
+import { newsData } from '@/data/newsData';
 
 const categories = [
   { name: 'Главная', icon: 'Home' },
@@ -50,10 +51,12 @@ const Index = () => {
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('Главная');
   const [menuOpen, setMenuOpen] = useState(false);
-  const [news, setNews] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [news, setNews] = useState<any[]>(newsData);
+  const [loading, setLoading] = useState(false);
   const [expandedNewsId, setExpandedNewsId] = useState<number | null>(null);
-  const [totalNewsCount, setTotalNewsCount] = useState(0);
+  const [totalNewsCount, setTotalNewsCount] = useState(newsData.length);
+  const [serverStatus, setServerStatus] = useState<string>('Новости загружены из кэша');
+  const [apiAttempts, setApiAttempts] = useState(0);
 
   useEffect(() => {
     fetchNews();
@@ -65,12 +68,22 @@ const Index = () => {
     return () => clearInterval(pollInterval);
   }, [activeCategory]);
 
+  useEffect(() => {
+    const filtered = activeCategory === 'Главная' 
+      ? newsData 
+      : newsData.filter(n => n.category === activeCategory);
+    setNews(filtered);
+  }, [activeCategory]);
+
   const fetchNews = async () => {
     setLoading(true);
+    setApiAttempts(prev => prev + 1);
     try {
       const url = activeCategory === 'Главная' 
         ? API_URL 
         : `${API_URL}?category=${encodeURIComponent(activeCategory)}`;
+      
+      setServerStatus(`Попытка ${apiAttempts + 1}: Подключение к серверу...`);
       
       const response = await fetch(url, {
         method: 'GET',
@@ -80,8 +93,11 @@ const Index = () => {
       });
       
       if (!response.ok) {
-        console.error('Response error:', response.status, response.statusText);
-        setNews([]);
+        setServerStatus(`❌ Сервер недоступен (${response.status}). Показаны кэшированные новости`);
+        const filtered = activeCategory === 'Главная' 
+          ? newsData 
+          : newsData.filter(n => n.category === activeCategory);
+        setNews(filtered);
         setLoading(false);
         return;
       }
@@ -91,12 +107,21 @@ const Index = () => {
       if (data && Array.isArray(data.news)) {
         setNews(data.news);
         setTotalNewsCount(data.count || data.news.length);
+        setServerStatus(`✅ Загружено ${data.news.length} новостей с сервера`);
       } else {
-        setNews([]);
+        const filtered = activeCategory === 'Главная' 
+          ? newsData 
+          : newsData.filter(n => n.category === activeCategory);
+        setNews(filtered);
+        setServerStatus('⚠️ Некорректный ответ сервера. Показаны кэшированные новости');
       }
     } catch (error) {
       console.error('Ошибка загрузки новостей:', error);
-      setNews([]);
+      setServerStatus(`❌ Ошибка подключения (попытка ${apiAttempts + 1}). Показаны кэшированные новости`);
+      const filtered = activeCategory === 'Главная' 
+        ? newsData 
+        : newsData.filter(n => n.category === activeCategory);
+      setNews(filtered);
     } finally {
       setLoading(false);
     }
@@ -110,13 +135,17 @@ const Index = () => {
       
       const response = await fetch(url);
       
-      if (!response.ok) return;
+      if (!response.ok) {
+        setServerStatus('🔄 Фоновое обновление: сервер недоступен');
+        return;
+      }
       
       const data = await response.json();
       
       if (data && Array.isArray(data.news)) {
         setNews(data.news);
         setTotalNewsCount(data.count || data.news.length);
+        setServerStatus(`🔄 Обновлено: ${data.news.length} новостей`);
       }
     } catch (error) {
       console.log('Фоновое обновление пропущено');
@@ -163,9 +192,7 @@ const Index = () => {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-foreground">НОВОСТИ 24</h1>
-                {totalNewsCount > 0 && (
-                  <p className="text-xs text-muted-foreground">Всего {totalNewsCount} новостей</p>
-                )}
+                <p className="text-xs text-muted-foreground">{serverStatus}</p>
               </div>
             </div>
 
