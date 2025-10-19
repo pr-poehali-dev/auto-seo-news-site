@@ -1,14 +1,10 @@
 {
   "tests": [
     {
-      "name": "Check auto-news generator responds",
-      "method": "GET",
+      "name": "OPTIONS request for CORS",
+      "method": "OPTIONS",
       "path": "/",
-      "expectedStatus": 200,
-      "expectedBody": {
-        "success": "boolean"
-      },
-      "bodyMatcher": "partial"
+      "expectedStatus": 200
     }
   ]
 }

@@ -1,29 +1,50 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
-const NEWS_CRON_URL = 'https://functions.poehali.dev/19c06317-5199-471d-aedf-57c00899a7e2';
-const INTERVAL_MS = 30 * 1000;
+const AUTO_NEWS_URL = 'https://functions.poehali.dev/110a45c8-d0f9-42fd-93e3-ffc41cad489b';
+const INTERVAL_MS = 2 * 60 * 1000;
 
 interface AutoNewsGeneratorProps {
   onNewsCreated: () => void;
 }
 
 const AutoNewsGenerator = ({ onNewsCreated }: AutoNewsGeneratorProps) => {
-  const triggerNewsGeneration = async () => {
+  const [isGenerating, setIsGenerating] = useState(false);
+  const silentMode = useRef(false);
+
+  const generateNews = async () => {
+    if (isGenerating) return;
+    
+    setIsGenerating(true);
+    
     try {
-      await fetch(NEWS_CRON_URL, { 
-        method: 'GET',
-        mode: 'no-cors'
+      const response = await fetch(AUTO_NEWS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
       
-      setTimeout(() => onNewsCreated(), 2000);
+      if (data.success && !silentMode.current) {
+        onNewsCreated();
+      }
     } catch (error) {
-      console.log('Генератор работает в фоне');
+      console.error('Ошибка генерации новости:', error);
+    } finally {
+      setIsGenerating(false);
     }
   };
 
   useEffect(() => {
+    generateNews();
+    
     const interval = setInterval(() => {
-      triggerNewsGeneration();
+      silentMode.current = true;
+      generateNews();
     }, INTERVAL_MS);
 
     return () => clearInterval(interval);
