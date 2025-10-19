@@ -72,8 +72,25 @@ const Index = () => {
         ? API_URL 
         : `${API_URL}?category=${encodeURIComponent(activeCategory)}`;
       
-      const response = await fetch(url);
+      console.log('Fetching news from:', url);
+      const response = await fetch(url, {
+        method: 'GET',
+        mode: 'cors',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log('Response status:', response.status, response.statusText);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Response error:', errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+      
       const data = await response.json();
+      console.log('News data received:', data);
       setNews(data.news || []);
       
       const countUrl = `${API_URL}?limit=1000`;
