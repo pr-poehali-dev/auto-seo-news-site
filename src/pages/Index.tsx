@@ -8,11 +8,14 @@ import Icon from '@/components/ui/icon';
 import AutoNewsGenerator from '@/components/AutoNewsGenerator';
 import SEOHead from '@/components/SEOHead';
 import StructuredData from '@/components/StructuredData';
+import { newsData } from '@/data/newsData';
+import NotificationStack from '@/components/NotificationStack';
 
 const categories = [
   { name: 'Главная', icon: 'Home' },
   { name: 'IT', icon: 'Code' },
   { name: 'Игры', icon: 'Gamepad2' },
+  { name: 'Криптовалюта', icon: 'Bitcoin' },
   { name: 'Экономика', icon: 'TrendingUp' },
   { name: 'Технологии', icon: 'Cpu' },
   { name: 'Спорт', icon: 'Trophy' },
@@ -20,29 +23,51 @@ const categories = [
   { name: 'Мир', icon: 'Globe' }
 ];
 
-const API_URL = 'https://functions.poehali.dev/f9026a29-c4a5-479e-9712-5966f2b1a425';
+const API_URL = 'https://functions.poehali.dev/d4635673-3760-41d9-9a96-ec32f8a0294c';
 
 const formatTime = (isoDate: string) => {
   if (!isoDate) return 'Недавно';
-  const date = new Date(isoDate);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
   
-  if (diffHours < 1) return 'Только что';
-  if (diffHours < 24) return `${diffHours} ${diffHours === 1 ? 'час' : diffHours < 5 ? 'часа' : 'часов'} назад`;
-  const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays} ${diffDays === 1 ? 'день' : diffDays < 5 ? 'дня' : 'дней'} назад`;
+  try {
+    const date = new Date(isoDate);
+    if (isNaN(date.getTime())) return 'Недавно';
+    
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    
+    if (diffMinutes < 1) return 'Только что';
+    if (diffMinutes < 60) return `${diffMinutes} ${diffMinutes === 1 ? 'минуту' : diffMinutes < 5 ? 'минуты' : 'минут'} назад`;
+    if (diffHours < 24) return `${diffHours} ${diffHours === 1 ? 'час' : diffHours < 5 ? 'часа' : 'часов'} назад`;
+    
+    const diffDays = Math.floor(diffHours / 24);
+    return `${diffDays} ${diffDays === 1 ? 'день' : diffDays < 5 ? 'дня' : 'дней'} назад`;
+  } catch {
+    return 'Недавно';
+  }
 };
 
 const Index = () => {
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('Главная');
   const [menuOpen, setMenuOpen] = useState(false);
-  const [news, setNews] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [news, setNews] = useState<any[]>(newsData);
+  const [loading, setLoading] = useState(false);
   const [expandedNewsId, setExpandedNewsId] = useState<number | null>(null);
-  const [totalNewsCount, setTotalNewsCount] = useState(0);
+  const [totalNewsCount, setTotalNewsCount] = useState(newsData.length);
+  const [serverStatus, setServerStatus] = useState<string>('Новости загружены из кэша');
+  const [apiAttempts, setApiAttempts] = useState(0);
+  const [notifications, setNotifications] = useState<Array<{id: string, message: string, type: 'info' | 'success' | 'warning' | 'error', timestamp: Date}>>([]);
+
+  const addNotification = (message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info') => {
+    const id = Date.now().toString();
+    setNotifications(prev => [...prev, { id, message, type, timestamp: new Date() }]);
+  };
+
+  const dismissNotification = (id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
 
   useEffect(() => {
     fetchNews();
@@ -54,23 +79,64 @@ const Index = () => {
     return () => clearInterval(pollInterval);
   }, [activeCategory]);
 
+  useEffect(() => {
+    const filtered = activeCategory === 'Главная' 
+      ? newsData 
+      : newsData.filter(n => n.category === activeCategory);
+    setNews(filtered);
+  }, [activeCategory]);
+
   const fetchNews = async () => {
     setLoading(true);
+    setApiAttempts(prev => prev + 1);
     try {
       const url = activeCategory === 'Главная' 
         ? API_URL 
         : `${API_URL}?category=${encodeURIComponent(activeCategory)}`;
       
-      const response = await fetch(url);
-      const data = await response.json();
-      setNews(data.news || []);
+      setServerStatus(`Попытка ${apiAttempts + 1}: Подключение к серверу...`);
+      addNotification(`Подключение к серверу (попытка ${apiAttempts + 1})...`, 'info');
       
-      const countUrl = `${API_URL}?limit=1000`;
-      const countResponse = await fetch(countUrl);
-      const countData = await countResponse.json();
-      setTotalNewsCount(countData.news?.length || 0);
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        setServerStatus(`❌ Сервер недоступен (${response.status}). Показаны кэшированные новости`);
+        addNotification(`Сервер недоступен (статус ${response.status}). Показаны кэшированные новости`, 'warning');
+        const filtered = activeCategory === 'Главная' 
+          ? newsData 
+          : newsData.filter(n => n.category === activeCategory);
+        setNews(filtered);
+        setLoading(false);
+        return;
+      }
+      
+      const data = await response.json();
+      
+      if (data && Array.isArray(data.news)) {
+        setNews(data.news);
+        setTotalNewsCount(data.count || data.news.length);
+        setServerStatus(`✅ Загружено ${data.news.length} новостей с сервера`);
+        addNotification(`Успешно загружено ${data.news.length} новостей с сервера`, 'success');
+      } else {
+        const filtered = activeCategory === 'Главная' 
+          ? newsData 
+          : newsData.filter(n => n.category === activeCategory);
+        setNews(filtered);
+        setServerStatus('⚠️ Некорректный ответ сервера. Показаны кэшированные новости');
+      }
     } catch (error) {
       console.error('Ошибка загрузки новостей:', error);
+      setServerStatus(`❌ Ошибка подключения (попытка ${apiAttempts + 1}). Показаны кэшированные новости`);
+      addNotification(`Ошибка подключения к серверу. Показаны кэшированные новости`, 'error');
+      const filtered = activeCategory === 'Главная' 
+        ? newsData 
+        : newsData.filter(n => n.category === activeCategory);
+      setNews(filtered);
     } finally {
       setLoading(false);
     }
@@ -83,15 +149,21 @@ const Index = () => {
         : `${API_URL}?category=${encodeURIComponent(activeCategory)}`;
       
       const response = await fetch(url);
-      const data = await response.json();
-      setNews(data.news || []);
       
-      const countUrl = `${API_URL}?limit=1000`;
-      const countResponse = await fetch(countUrl);
-      const countData = await countResponse.json();
-      setTotalNewsCount(countData.news?.length || 0);
+      if (!response.ok) {
+        setServerStatus('🔄 Фоновое обновление: сервер недоступен');
+        return;
+      }
+      
+      const data = await response.json();
+      
+      if (data && Array.isArray(data.news)) {
+        setNews(data.news);
+        setTotalNewsCount(data.count || data.news.length);
+        setServerStatus(`🔄 Обновлено: ${data.news.length} новостей`);
+      }
     } catch (error) {
-      console.error('Ошибка фоновой загрузки:', error);
+      console.log('Фоновое обновление пропущено');
     }
   };
 
@@ -108,8 +180,9 @@ const Index = () => {
   const currentUrl = window.location.href;
   
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <AutoNewsGenerator onNewsCreated={fetchNews} />
+      <NotificationStack notifications={notifications} onDismiss={dismissNotification} />
       <SEOHead 
         title={pageTitle}
         description={pageDescription}
@@ -135,9 +208,7 @@ const Index = () => {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-foreground">НОВОСТИ 24</h1>
-                {totalNewsCount > 0 && (
-                  <p className="text-xs text-muted-foreground">Всего {totalNewsCount} новостей</p>
-                )}
+                <p className="text-xs text-muted-foreground">{serverStatus}</p>
               </div>
             </div>
 
@@ -196,7 +267,7 @@ const Index = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 flex-1">
         <div className="mb-8 animate-slide-up">
           <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-4 font-semibold">
             {activeCategory === 'Главная' ? 'Последние новости' : activeCategory}
@@ -212,8 +283,8 @@ const Index = () => {
             {filteredNews.map((newsItem, index) => (
               <Card 
                 key={newsItem.id} 
-                className="group overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer border-0 animate-fade-in"
-                style={{ animationDelay: `${index * 100}ms` }}
+                className="group overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer border-0 animate-slide-in-up"
+                style={{ animationDelay: `${index * 50}ms` }}
                 onClick={() => navigate(`/news/${newsItem.id}`)}
               >
                 <div className="relative overflow-hidden bg-muted">
@@ -301,7 +372,7 @@ const Index = () => {
         )}
       </main>
 
-      <footer className="bg-secondary text-secondary-foreground mt-16">
+      <footer className="bg-secondary text-secondary-foreground mt-auto">
         <div className="container mx-auto px-4 py-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
