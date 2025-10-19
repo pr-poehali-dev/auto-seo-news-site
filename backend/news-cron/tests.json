@@ -1,7 +1,7 @@
 {
   "tests": [
     {
-      "name": "Check auto-news generator responds",
+      "name": "Trigger news generation",
       "method": "GET",
       "path": "/",
       "expectedStatus": 200,

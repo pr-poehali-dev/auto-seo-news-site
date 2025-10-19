@@ -72,33 +72,31 @@ const Index = () => {
         ? API_URL 
         : `${API_URL}?category=${encodeURIComponent(activeCategory)}`;
       
-      console.log('Fetching news from:', url);
       const response = await fetch(url, {
         method: 'GET',
-        mode: 'cors',
         headers: {
           'Content-Type': 'application/json'
         }
       });
       
-      console.log('Response status:', response.status, response.statusText);
-      
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Response error:', errorText);
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
+        console.error('Response error:', response.status, response.statusText);
+        setNews([]);
+        setLoading(false);
+        return;
       }
       
       const data = await response.json();
-      console.log('News data received:', data);
-      setNews(data.news || []);
       
-      const countUrl = `${API_URL}?limit=1000`;
-      const countResponse = await fetch(countUrl);
-      const countData = await countResponse.json();
-      setTotalNewsCount(countData.news?.length || 0);
+      if (data && Array.isArray(data.news)) {
+        setNews(data.news);
+        setTotalNewsCount(data.count || data.news.length);
+      } else {
+        setNews([]);
+      }
     } catch (error) {
       console.error('Ошибка загрузки новостей:', error);
+      setNews([]);
     } finally {
       setLoading(false);
     }
@@ -111,15 +109,17 @@ const Index = () => {
         : `${API_URL}?category=${encodeURIComponent(activeCategory)}`;
       
       const response = await fetch(url);
-      const data = await response.json();
-      setNews(data.news || []);
       
-      const countUrl = `${API_URL}?limit=1000`;
-      const countResponse = await fetch(countUrl);
-      const countData = await countResponse.json();
-      setTotalNewsCount(countData.news?.length || 0);
+      if (!response.ok) return;
+      
+      const data = await response.json();
+      
+      if (data && Array.isArray(data.news)) {
+        setNews(data.news);
+        setTotalNewsCount(data.count || data.news.length);
+      }
     } catch (error) {
-      console.error('Ошибка фоновой загрузки:', error);
+      console.log('Фоновое обновление пропущено');
     }
   };
 
