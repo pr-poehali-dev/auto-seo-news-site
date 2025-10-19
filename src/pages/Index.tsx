@@ -9,6 +9,7 @@ import AutoNewsGenerator from '@/components/AutoNewsGenerator';
 import SEOHead from '@/components/SEOHead';
 import StructuredData from '@/components/StructuredData';
 import { newsData } from '@/data/newsData';
+import NotificationStack from '@/components/NotificationStack';
 
 const categories = [
   { name: 'Главная', icon: 'Home' },
@@ -57,6 +58,16 @@ const Index = () => {
   const [totalNewsCount, setTotalNewsCount] = useState(newsData.length);
   const [serverStatus, setServerStatus] = useState<string>('Новости загружены из кэша');
   const [apiAttempts, setApiAttempts] = useState(0);
+  const [notifications, setNotifications] = useState<Array<{id: string, message: string, type: 'info' | 'success' | 'warning' | 'error', timestamp: Date}>>([]);
+
+  const addNotification = (message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info') => {
+    const id = Date.now().toString();
+    setNotifications(prev => [...prev, { id, message, type, timestamp: new Date() }]);
+  };
+
+  const dismissNotification = (id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
 
   useEffect(() => {
     fetchNews();
@@ -84,6 +95,7 @@ const Index = () => {
         : `${API_URL}?category=${encodeURIComponent(activeCategory)}`;
       
       setServerStatus(`Попытка ${apiAttempts + 1}: Подключение к серверу...`);
+      addNotification(`Подключение к серверу (попытка ${apiAttempts + 1})...`, 'info');
       
       const response = await fetch(url, {
         method: 'GET',
@@ -94,6 +106,7 @@ const Index = () => {
       
       if (!response.ok) {
         setServerStatus(`❌ Сервер недоступен (${response.status}). Показаны кэшированные новости`);
+        addNotification(`Сервер недоступен (статус ${response.status}). Показаны кэшированные новости`, 'warning');
         const filtered = activeCategory === 'Главная' 
           ? newsData 
           : newsData.filter(n => n.category === activeCategory);
@@ -108,6 +121,7 @@ const Index = () => {
         setNews(data.news);
         setTotalNewsCount(data.count || data.news.length);
         setServerStatus(`✅ Загружено ${data.news.length} новостей с сервера`);
+        addNotification(`Успешно загружено ${data.news.length} новостей с сервера`, 'success');
       } else {
         const filtered = activeCategory === 'Главная' 
           ? newsData 
@@ -118,6 +132,7 @@ const Index = () => {
     } catch (error) {
       console.error('Ошибка загрузки новостей:', error);
       setServerStatus(`❌ Ошибка подключения (попытка ${apiAttempts + 1}). Показаны кэшированные новости`);
+      addNotification(`Ошибка подключения к серверу. Показаны кэшированные новости`, 'error');
       const filtered = activeCategory === 'Главная' 
         ? newsData 
         : newsData.filter(n => n.category === activeCategory);
@@ -167,6 +182,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <AutoNewsGenerator onNewsCreated={fetchNews} />
+      <NotificationStack notifications={notifications} onDismiss={dismissNotification} />
       <SEOHead 
         title={pageTitle}
         description={pageDescription}
