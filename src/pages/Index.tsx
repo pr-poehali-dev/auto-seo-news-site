@@ -21,7 +21,7 @@ const categories = [
   { name: 'Мир', icon: 'Globe' }
 ];
 
-const API_URL = 'https://functions.poehali.dev/f9026a29-c4a5-479e-9712-5966f2b1a425';
+const API_URL = 'https://functions.poehali.dev/d4635673-3760-41d9-9a96-ec32f8a0294c';
 
 const formatTime = (isoDate: string) => {
   if (!isoDate) return 'Недавно';

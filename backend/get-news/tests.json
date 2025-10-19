@@ -1,0 +1,25 @@
+{
+  "tests": [
+    {
+      "name": "Get all news from database",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "news": "array",
+        "count": "number"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Get news by category",
+      "method": "GET",
+      "path": "/?category=IT",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "news": "array"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
